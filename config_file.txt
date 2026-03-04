@@ -1,0 +1,25 @@
+{
+  "algorithm": "KNN", //KNN, DecisionTree, RandomForest, NaiveBayes
+  "hyperparametersKNN": {
+    "p": , //1, 2
+    "k": , //1, 2, 3...
+    "w": //weighted, not-weighted
+  },
+  "hyperparametersDecisionTree": {
+
+  },
+  "hyperparametersRandomForest": {
+
+  },
+  "hyperparametersNaiveBayes": {
+
+  },
+  "preprocessing": {
+    "categorical_features": [],
+    "missing_values": "impute", //impute, delete
+    "impute_strategy": "mean", //median, mean, mode
+    "scaling": "max-min", //max-min, max, z-score
+    "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency
+    "sampling": "undersampling" //undersampling, oversampling
+  }
+}

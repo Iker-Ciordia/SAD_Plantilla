@@ -1,0 +1,25 @@
+{
+  "algorithm": "KNN",
+  "hyperparametersKNN": {
+    "p": 1,
+    "k": 5,
+    "w": "weigthed"
+  },
+  "hyperparametersDecisionTree": {
+
+  },
+  "hyperparametersRandomForest": {
+
+  },
+  "hyperparametersNaiveBayes": {
+
+  },
+  "preprocessing": {
+    "categorical_features": [],
+    "missing_values": "impute",
+    "impute_strategy": "mean",
+    "scaling": "standard",
+    "text_preprocess": "tf-idf",
+    "sampling": "undersampling"
+  }
+}
