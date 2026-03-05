@@ -17,8 +17,8 @@
   "preprocessing": {
     "categorical_features": [],
     "missing_values": "impute", //impute, delete
-    "impute_strategy": "mean", //median, mean, mode
-    "scaling": "max-min", //max-min, max, z-score
+    "impute_strategy": "mean", //median, mean, most_frequent
+    "scaling": "max-min", //max-min, max, z-score/standard
     "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency
     "sampling": "undersampling" //undersampling, oversampling
   }

@@ -81,27 +81,66 @@ def apply_preprocessing(data, config_file): #TODO Revisar lo que hace la funció
             imputer = SimpleImputer(strategy=estrategia) #Prepara la herramienta de imputación de valores
             data[num_cols] = imputer.fit_transform(data[num_cols]) #Imputamos los valores faltantes con la estrategía extraída previamente.
 
-    #Preprocesamiento de texto (TF-IDF)
-    if opciones.get("text_process") == "tf-idf": #TODO Habría que hacer alternativa para BOW tanto One-Hot como de frecuencia
-        #Buscamos columnas de tipo 'object' (texto)
-        text_cols = data[columnas_x].select_dtypes(include=['object']).columns #De las columnas que no son la que hay que predecir,
-                                                                               #nos quedamos con los nombres de aquellas que son texto (al revés que arriba).
-        if len(text_cols) > 0: #Si existe alguna columna que sea texto
-            print(f" -> Aplicando TF-IDF a las columnas de texto: {list(text_cols)}")
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            vectorizer = TfidfVectorizer() #Creamos la herramienta de TF-IDF
-            for col in text_cols:
-                #Transformamos la columna de texto en una matriz de características numéricas
-                #Cada fila de la matriz representa una fila (una instancia) de la columna que estamos convirtiendo a TF-IDF en forma de vector numérico.
-                #De tal forma que cada elemento en ese vector es un número con el valor TF-IDF asignado.
-                tfidf_matrix = vectorizer.fit_transform(data[col].astype(str)) #El astype convierte cualquier cosa (ya sea filas de solo números o filas vacías en string)
-                                                                               #Si no la función fallaría
+    # Preprocesamiento de texto (TF-IDF, BoW/frecuency o Binario/one-hot)
+    metodo_texto = opciones.get("text_process")
 
-                # Convertimos la matriz en un DataFrame con nombres de columnas
-                tfidf_df = pd.DataFrame(tfidf_matrix.toarray(),
-                                        columns=[f"{col}_tfidf_{i}" for i in range(tfidf_matrix.shape[1])])
-                # Eliminamos la columna de texto original y unimos las nuevas numéricas
-                data = data.drop(columns=[col]).join(tfidf_df)
+    if metodo_texto in ["tf-idf", "bow", "binary"]:
+        text_cols = data[columnas_x].select_dtypes(include=['object']).columns
+
+        if len(text_cols) > 0:
+            from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+
+            # --- NUEVO: Selección de estrategia ---
+            if metodo_texto == "tf-idf":
+                vectorizer = TfidfVectorizer()
+                prefijo = "tfidf"
+            elif metodo_texto == "frecuency":
+                vectorizer = CountVectorizer()  # Cuenta frecuencias: 1, 2, 3...
+                prefijo = "frecuency"
+            elif metodo_texto == "one-hot":
+                vectorizer = CountVectorizer(binary=True)  # One-Hot: 0 o 1
+                prefijo = "one-hot"
+
+            print(f" -> Aplicando {metodo_texto} a las columnas: {list(text_cols)}")
+
+            for col in text_cols:
+                # Transformamos el texto (asegurando string para evitar errores con NaNs)
+                matrix = vectorizer.fit_transform(data[col].astype(str))
+
+                # --- MEJORA: Nombres de columnas con las palabras reales ---
+                palabras = vectorizer.get_feature_names_out()
+                nombres_cols = [f"{col}_{prefijo}_{w}" for w in palabras]
+
+                # Convertimos a DataFrame manteniendo el índice original
+                text_df = pd.DataFrame(matrix.toarray(), columns=nombres_cols, index=data.index)
+
+                # Eliminamos la original y unimos las nuevas
+                data = data.drop(columns=[col]).join(text_df)
+
+
+        # Escalado de valores
+        metodo_escalado = opciones.get("scaling") #Cogemos el valor de escalado del JSON
+
+        if metodo_escalado in ["max-min", "max", "z-score", "standard"]:
+            from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler
+
+            # 1. Seleccionamos el escalador según el JSON
+            if metodo_escalado == "max-min":
+                scaler = MinMaxScaler()
+            elif metodo_escalado == "max":
+                scaler = MaxAbsScaler()
+            else:  # z-score o standard es lo mismo
+                scaler = StandardScaler()
+
+            print(f" -> Aplicando escalado tipo: {metodo_escalado}")
+
+            # 2. Identificamos qué columnas escalar (todo menos la columna objetivo)
+            # Esto incluye las nuevas columnas creadas por TF-IDF/BoW
+            columnas_a_escalar = data.columns.drop(columna_y).tolist()
+
+            # 3. Aplicamos la transformación
+            data[columnas_a_escalar] = scaler.fit_transform(data[columnas_a_escalar])
+            print(f" -> {len(columnas_a_escalar)} columnas escaladas correctamente.")
 
     # Volvemos a asegurar que la columna objetivo (y) esté al final tras las posibles modificaciones
     columnas_finales = data.columns.tolist()
@@ -110,8 +149,6 @@ def apply_preprocessing(data, config_file): #TODO Revisar lo que hace la funció
     data = data[columnas_finales]
 
     return data
-
-
 
 
 def calculate_metrics(y_test, y_pred):
