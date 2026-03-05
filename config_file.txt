@@ -3,7 +3,7 @@
   "hyperparametersKNN": {
     "p": , //1, 2
     "k": , //1, 2, 3...
-    "w": //weighted, not-weighted
+    "w": //distance, uniform (con peso/sin peso)
   },
   "hyperparametersDecisionTree": {
 
@@ -15,7 +15,8 @@
 
   },
   "preprocessing": {
-    "categorical_features": [],
+    "categorical_features": [], //Se meten los nombres de las columnas categóricas que NO hay que meter como TF-IDF/BOW (por ejemplo, columna con "Yes" y "No")
+    "categorical_features_convert": [], //Se meten los nombres de las columnas categóricas que SÍ hay que meter como TF-IDF/BOW
     "missing_values": "impute", //impute, delete
     "impute_strategy": "mean", //median, mean, most_frequent
     "scaling": "max-min", //max-min, max, z-score/standard

@@ -1,9 +1,11 @@
 {
   "algorithm": "KNN",
   "hyperparametersKNN": {
-    "p": 1,
-    "k": 5,
-    "w": "weigthed"
+    "p_min": 1,
+    "p_max": 2,
+    "k_min": 1,
+    "k_max": 7,
+    "w": ["uniform", "distance"]
   },
   "hyperparametersDecisionTree": {
 
@@ -15,7 +17,9 @@
 
   },
   "preprocessing": {
-    "categorical_features": [],
+    "drop_features": [],
+    "categorical_features_not_convert": [],
+    "categorical_features_convert": [],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "standard",
