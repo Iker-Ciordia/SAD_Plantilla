@@ -1,5 +1,7 @@
 {
+  "entrenar": 0, //0,1 (0 indica que NO se quiere entrenar y que se quiere evaluar. 1 indica que se quiere entrenar. Afecta al método Main)
   "algorithm": "KNN", //KNN, DecisionTree, RandomForest, NaiveBayes
+  "metric_to_evaluate": "macro", //macro, micro o binary (binary quiere decir que usará métricas para clasificación binaria, por lo que también indica implicitamente si la clasificación es binaria o no)
   "hyperparametersKNN": {
     "p": , //1, 2
     "k": , //1, 2, 3...

@@ -1,5 +1,7 @@
 {
+  "entrenar": 0,
   "algorithm": "KNN",
+  "metric_to_evaluate": "micro",
   "hyperparametersKNN": {
     "p_min": 1,
     "p_max": 2,
