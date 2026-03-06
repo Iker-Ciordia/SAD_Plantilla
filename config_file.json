@@ -5,7 +5,8 @@
     "p_max": 2,
     "k_min": 1,
     "k_max": 7,
-    "w": ["uniform", "distance"]
+    "w": ["uniform", "distance"],
+    "step": 2
   },
   "hyperparametersDecisionTree": {
 

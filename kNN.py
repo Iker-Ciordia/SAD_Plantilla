@@ -29,10 +29,10 @@ def load_data(file, columna_target):
     return data
 
 
-def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo que hace la función en profundidad
+def apply_preprocessing(data_train, data_dev, config_file): #TODO Cambiar funcion a que solo preprocese un Dataset (todos con fit_transform aunque con pocos datos tenga sesgo)
     """
     Aplica el preprocesado evitando la fuga de datos (Data Leakage).
-    Aprende reglas en train, las aplica ciegamente en test.
+    Aprende reglas en train, las aplica ciegamente en dev.
     """
 
     import json
@@ -54,7 +54,7 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
                 columnas_a_borrar.append(col) #Añade la columna a la lista que habrá que borrar luego
 
         data_train = data_train.drop(columns=columnas_a_borrar) #Borra del DataFrame todas las columnas que se hayan indicado en el JSON y no interesan
-        data_test = data_test.drop(columns=columnas_a_borrar)
+        data_dev = data_dev.drop(columns=columnas_a_borrar)
         print(f" -> Columnas eliminadas: {columnas_a_borrar}")
 
     #Separamos temporalmente las columnas de atributos de la clase objetivo para no alterarla
@@ -76,13 +76,13 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
         if len(num_cols) > 0: #Si hay al menos una columna numérica
             from sklearn.impute import SimpleImputer
             imputer = SimpleImputer(strategy=estrategia) #Prepara la herramienta de imputación de valores
-            # ¡ATENCIÓN! Train hace fit_transform, Test solo transform
+            # ¡ATENCIÓN! Train hace fit_transform, Dev solo transform
             #La diferencia radica en que el valor que vamos a calcular imputar en Machine Learning real solo se debe calcular sobre el conjunto de Train.
-            #Es decir, si en el train la moda es 2000, se imputará con 2000 tanto en el train, como el dev como el test.
-            #De esta forma, aunque la moda en el test sea 1000, se pondrá un 2000. Esto se hace porque si no estaríamos permitiendo que
-            #la distribución de datos del conjunto de test influya en el preprocesado, lo que se considera "hacer trampas"
+            #Es decir, si en el train la moda es 2000, se imputará con 2000 tanto en el train, como el dev como el dev.
+            #De esta forma, aunque la moda en el dev sea 1000, se pondrá un 2000. Esto se hace porque si no estaríamos permitiendo que
+            #la distribución de datos del conjunto de dev influya en el preprocesado, lo que se considera "hacer trampas"
             data_train[num_cols] = imputer.fit_transform(data_train[num_cols]) #Imputamos los valores faltantes con la estrategía extraída previamente.
-            data_test[num_cols] = imputer.transform(data_test[num_cols])
+            data_dev[num_cols] = imputer.transform(data_dev[num_cols])
 
 
     # Preprocesamiento de texto (TF-IDF, BoW/frecuency o Binario/one-hot)
@@ -112,9 +112,9 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
 
             for col in text_cols:
                 # Transformamos el texto (asegurando string para evitar errores con NaNs)
-                # ¡ATENCIÓN! Train aprende el diccionario, Test se adapta. Aplica el mismo criterio de no contaminación que el escalado
+                # ¡ATENCIÓN! Train aprende el diccionario, Dev se adapta. Aplica el mismo criterio de no contaminación que el escalado
                 matrix_train = vectorizer.fit_transform(data_train[col].astype(str))
-                matrix_test = vectorizer.transform(data_test[col].astype(str))
+                matrix_dev = vectorizer.transform(data_dev[col].astype(str))
 
                 # --- Nombres de columnas con las palabras reales ---
                 palabras = vectorizer.get_feature_names_out()
@@ -122,11 +122,11 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
 
                 # Convertimos a DataFrames manteniendo el índice original
                 df_train = pd.DataFrame(matrix_train.toarray(), columns=nombres_cols, index=data_train.index)
-                df_test = pd.DataFrame(matrix_test.toarray(), columns=nombres_cols, index=data_test.index)
+                df_dev = pd.DataFrame(matrix_dev.toarray(), columns=nombres_cols, index=data_dev.index)
 
                 # Eliminamos la original y unimos las nuevas
                 data_train = data_train.drop(columns=[col]).join(df_train)
-                data_test = data_test.drop(columns=[col]).join(df_test)
+                data_dev = data_dev.drop(columns=[col]).join(df_dev)
 
 
     # Escalado de valores
@@ -148,9 +148,9 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
         columnas_a_escalar = data_train.columns.drop(columna_y).tolist()
 
         # 3. Aplicamos la transformación
-        # ¡ATENCIÓN! Train da las medias/máximos, Test solo se ajusta a ellos
+        # ¡ATENCIÓN! Train da las medias/máximos, Dev solo se ajusta a ellos
         data_train[columnas_a_escalar] = scaler.fit_transform(data_train[columnas_a_escalar])
-        data_test[columnas_a_escalar] = scaler.transform(data_test[columnas_a_escalar])
+        data_dev[columnas_a_escalar] = scaler.transform(data_dev[columnas_a_escalar])
         print(f" -> {len(columnas_a_escalar)} columnas escaladas correctamente.")
 
     # Volvemos a asegurar que la columna objetivo (y) esté al final tras las posibles modificaciones
@@ -162,13 +162,13 @@ def apply_preprocessing(data_train, data_test, config_file): #TODO Revisar lo qu
             cols.append(columna_y)
         return df[cols]
 
-    return reordenar(data_train), reordenar(data_test)
+    return reordenar(data_train), reordenar(data_dev)
 
 
-def calculate_metrics(y_test, y_pred): #TODO Habría que diseñarlo de tal forma que en el JSON se pueda elegir qué métricas evaluar
+def calculate_metrics(y_dev, y_pred): #TODO Habría que diseñarlo de tal forma que en el JSON se pueda elegir qué métricas evaluar
     """
     Función para calcular el F-score
-    :param y_test: Valores reales
+    :param y_dev: Valores reales
     :param y_pred: Valores predichos
     :return: F-score (micro), F-score (macro)
     """
@@ -177,26 +177,26 @@ def calculate_metrics(y_test, y_pred): #TODO Habría que diseñarlo de tal forma
     from sklearn.metrics import precision_score
 
     print("\nPrecision:")
-    precision_micro = precision_score(y_test, y_pred, average='micro')
-    precision_macro = precision_score(y_test, y_pred, average='macro')
+    precision_micro = precision_score(y_dev, y_pred, average='micro')
+    precision_macro = precision_score(y_dev, y_pred, average='macro')
     print("Micro: " + str(precision_micro), "Macro: " + str(precision_macro))
 
     print("\nRecall:")
-    recall_micro = recall_score(y_test, y_pred, average='micro')
-    recall_macro = recall_score(y_test, y_pred, average='macro')
+    recall_micro = recall_score(y_dev, y_pred, average='micro')
+    recall_macro = recall_score(y_dev, y_pred, average='macro')
     print("Micro: " + str(recall_micro), "Macro: " + str(recall_macro))
 
     print("\nF-score:")
-    fscore_micro = f1_score(y_test, y_pred, average='micro')
-    fscore_macro = f1_score(y_test, y_pred, average='macro')
+    fscore_micro = f1_score(y_dev, y_pred, average='micro')
+    fscore_macro = f1_score(y_dev, y_pred, average='macro')
     print("Micro: " + str(fscore_micro), "Macro: " + str(fscore_macro))
 
 
 
-def calculate_confusion_matrix(y_test, y_pred): # TODO las métricas no sé si también hay que permitir elegir cuál usar. Supongo que sí
+def calculate_confusion_matrix(y_dev, y_pred): # TODO las métricas no sé si también hay que permitir elegir cuál usar. Supongo que sí
     """
     Función para calcular la matriz de confusión
-    :param y_test: Valores reales
+    :param y_dev: Valores reales
     :param y_pred: Valores predichos
     :return: Matriz de confusión
     """
@@ -204,12 +204,12 @@ def calculate_confusion_matrix(y_test, y_pred): # TODO las métricas no sé si t
     import pandas as pd
     import numpy as np
 
-    cm = confusion_matrix(y_test, y_pred)
-    #print(y_test)
+    cm = confusion_matrix(y_dev, y_pred)
+    #print(y_dev)
 
-    #Extraemos las etiquetas únicas y ordenadas de las clases reales de test
-    # (las sacamos de test y no de la prediccion por si hay alguna clase que no ha predicho)
-    etiquetas = np.unique(y_test)
+    #Extraemos las etiquetas únicas y ordenadas de las clases reales de dev
+    # (las sacamos de dev y no de la prediccion por si hay alguna clase que no ha predicho)
+    etiquetas = np.unique(y_dev)
 
     #Creamos los nombres para las filas (Realidad) y columnas (Predicción)
     nombres_filas = [f"Realidad: {e}" for e in etiquetas]
@@ -219,7 +219,7 @@ def calculate_confusion_matrix(y_test, y_pred): # TODO las métricas no sé si t
     matriz_bonita = pd.DataFrame(cm, index=nombres_filas, columns=nombres_columnas)
     return matriz_bonita
 
-def kNN(data_train, data_test, k, weights, p):
+def kNN(data_train, data_dev, k, weights, p):
     """
     Función para implementar el algoritmo kNN con datos ya preprocesados y divididos
     """
@@ -229,9 +229,9 @@ def kNN(data_train, data_test, k, weights, p):
     X_train = data_train.iloc[:, :-1].values # Todas las columnas menos la última (atributos que se van a usar para entrenar)
     y_train = data_train.iloc[:, -1].values # Última columna (atributo a predecir). Sí o sí está en la última columna
 
-    # Seleccionamos las características y la clase del conjunto de datos de testeo.
-    X_test = data_test.iloc[:, :-1].values
-    y_test = data_test.iloc[:, -1].values
+    # Seleccionamos las características y la clase del conjunto de datos de dev.
+    X_dev = data_dev.iloc[:, :-1].values
+    y_dev = data_dev.iloc[:, -1].values
 
     # Entrenamos el modelo
     from sklearn.neighbors import KNeighborsClassifier #Importamos el algoritmo KNN
@@ -241,21 +241,21 @@ def kNN(data_train, data_test, k, weights, p):
                                      # y_train es la clase real de dicha instancia
     
     # Predecimos los resultados
-    y_pred = classifier.predict(X_test) #Probamos el modelo con el dataset de testeo (sin darle la clase real)
+    y_pred = classifier.predict(X_dev) #Probamos el modelo con el dataset de dev (sin darle la clase real)
     
-    return y_test, y_pred
+    return y_dev, y_pred
 
-def guardar_resultados_csv(k, p, weights, y_test, y_pred):
+def guardar_resultados_csv(k, p, weights, y_dev, y_pred):
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
     import csv
     import os
 
     # Calculamos las métricas (usamos macro como ejemplo, cambiarlo a None si es binario)
-    acc = accuracy_score(y_test, y_pred)
-    prec = precision_score(y_test, y_pred, average='macro', zero_division=0)
-    rec = recall_score(y_test, y_pred, average='macro', zero_division=0)
-    f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
+    acc = accuracy_score(y_dev, y_pred)
+    prec = precision_score(y_dev, y_pred, average='macro', zero_division=0)
+    rec = recall_score(y_dev, y_pred, average='macro', zero_division=0)
+    f1 = f1_score(y_dev, y_pred, average='macro', zero_division=0)
 
     combinacion = f"k={k}, p={p}, {weights}"
     archivo_csv = 'resultados.csv'
@@ -278,7 +278,7 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
     # Pedimos fichero, objetivo y obligatoriamente el JSON
     if len(sys.argv) < 4 or "-c" not in sys.argv:
         print("Uso: python script.py <fichero> <columna_objetivo> -c <config.json>")
-        print("Opcional (para lanzador KNN): python script.py <fich> <obj> <k> <w> <p> -c <config.json>")
+        #print("Opcional (para lanzador KNN): python script.py <fich> <obj> <k> <w> <p> -c <config.json>")
         sys.exit(1)
 
     # Asignamos las variables desde la consola para que sea más fácil de leer
@@ -303,15 +303,15 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
     # A. Cargamos los datos
     data = load_data(fichero, columna_objetivo)
 
-    # B. División del conjunto de train con el de test. Evitamos Data Leakage para CUALQUIER algoritmo
-    data_train, data_test = train_test_split(data, test_size=0.20, random_state=42)
+    # B. División del conjunto de train con el de dev. Evitamos Data Leakage para CUALQUIER algoritmo
+    data_train, data_dev = train_test_split(data, test_size=0.20, random_state=42)
 
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
-        data_train, data_test = apply_preprocessing(data_train, data_test, config_file)
+        data_train, data_dev = apply_preprocessing(data_train, data_dev, config_file)
 
     # --- ENRUTADOR DE ALGORITMOS ---
-    y_test, y_pred = None, None
+    y_dev, y_pred = None, None
 
     if algoritmo == "KNN":
         print("\n[->] Ejecutando modelo: kNN")
@@ -341,17 +341,17 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
                     print(f"--> Evaluando combinación: k={k}, p={p}, w={weights}")
 
                     # Llamamos a la función
-                    y_test, y_pred = kNN(data_train, data_test, k, weights, p)
+                    y_dev, y_pred = kNN(data_train, data_dev, k, weights, p)
 
                     # Mostramos y guardamos resultados de ESTA combinación
-                    print(calculate_confusion_matrix(y_test, y_pred))
-                    calculate_metrics(y_test, y_pred)
-                    guardar_resultados_csv(k, p, weights, y_test, y_pred)
+                    print(calculate_confusion_matrix(y_dev, y_pred))
+                    calculate_metrics(y_dev, y_pred)
+                    guardar_resultados_csv(k, p, weights, y_dev, y_pred)
 
     elif algoritmo == "DecisionTree":
         print("\n[->] Ejecutando modelo: Árbol de Decisión")
         # TODO: Leer hyperparametersDecisionTree del JSON
-        # TODO: y_test, y_pred = decisionTree(data_train, data_test, max_depth, ...)
+        # TODO: y_dev, y_pred = decisionTree(data_train, data_dev, max_depth, ...)
         pass
 
     elif algoritmo == "RandomForest":
