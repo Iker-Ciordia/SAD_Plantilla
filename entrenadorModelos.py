@@ -319,7 +319,7 @@ def guardar_resultados_csv(k, p, weights, y_dev, y_pred):
     config = json.load(file)
     tipo_metrica = config["metric_to_evaluate"]
 
-    # Calculamos las métricas (usamos macro como ejemplo, cambiarlo a None si es binario)
+    # Calculamos las métricas
     acc = accuracy_score(y_dev, y_pred)
     prec = precision_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
     rec = recall_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
@@ -346,7 +346,6 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
     # Pedimos fichero, objetivo y obligatoriamente el JSON
     if len(sys.argv) < 4 or "-c" not in sys.argv:
         print("Uso: python script.py <fichero> <columna_objetivo> -c <config.json>")
-        #print("Opcional (para lanzador KNN): python script.py <fich> <obj> <k> <w> <p> -c <config.json>")
         sys.exit(1)
 
     # Asignamos las variables desde la consola para que sea más fácil de leer
@@ -391,6 +390,7 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
         p_min = hiper_knn.get("p_min", 2)
         p_max = hiper_knn.get("p_max", 2)
         pesos_lista = hiper_knn.get("w", ["uniform"])
+        step = hiper_knn.get("step", 2)
 
         # Por seguridad: si pesos_lista es un solo string, lo convertimos a lista
         if isinstance(pesos_lista, str):
@@ -405,7 +405,7 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
         mejor_modelo = None
         mejores_hiperparametros = ""
         # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
-        for k in range(k_min, k_max + 1, 2):  # Avanza de 2 en 2 para k impares
+        for k in range(k_min, k_max + 1, step):  # Avanza con lo que el usuario del script crea conveniente
             for p in range(p_min, p_max + 1): #Para los 2 tipos de distancias posibles
                 for weights in pesos_lista:
                     print(f"\n--------------------------------------------------")

@@ -3,9 +3,12 @@
   "algorithm": "KNN", //KNN, DecisionTree, RandomForest, NaiveBayes
   "metric_to_evaluate": "macro", //macro, micro o binary (binary quiere decir que usará métricas para clasificación binaria, por lo que también indica implicitamente si la clasificación es binaria o no)
   "hyperparametersKNN": {
-    "p": , //1, 2
-    "k": , //1, 2, 3...
-    "w": //distance, uniform (con peso/sin peso)
+    "p_min": 1,
+    "p_max": 2,
+    "k_min": 1,
+    "k_max": 7,
+    "w": ["uniform", "distance"],
+    "step": 2
   },
   "hyperparametersDecisionTree": {
 

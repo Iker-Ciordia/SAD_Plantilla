@@ -1,26 +1,30 @@
 import pickle
+import sys
 
-import json
 import pandas as pd
 import entrenadorModelos as entrenadorModelos
 # Asumo que tienes importada tu función load_data y apply_preprocessing
 
-# 1. Cargar el paquete
-with open('mejor_modelo_knn.pkl', 'rb') as archivo:
-    paquete_cargado = pickle.load(archivo)
+if len(sys.argv) < 5 or "-c" not in sys.argv:
+    print("Uso: python script.py <fichero> <columna_objetivo> <mejor_modelo> -c <config.json>")
+    sys.exit(1)
 
+# Asignamos las variables desde la consola para que sea más fácil de leer
+fichero = sys.argv[1]
+columna_objetivo = sys.argv[2]
+paquete_cargado = sys.argv[3]
+config = sys.argv[4]
+
+#Cargamos del mejor modelo las herramientas utilizadas
 modelo_knn = paquete_cargado['modelo_knn']
 mis_herramientas = paquete_cargado['herramientas_preproceso']
 
 # 2. Cargar el test secreto
 # (Usar load_data para asegurar que la columna objetivo va al final)
-data_test = entrenadorModelos.load_data("iris.csv", "Especie") # Pon aquí el nombre de tu columna
-
-with open("config_file.json", 'r') as file:
-    config = json.load(file)
+data_test = entrenadorModelos.load_data(fichero, columna_objetivo)
 
 # 3. Preprocesamos los datos de testing
-data_test_limpio = entrenadorModelos.apply_preprocessing("config_file.json", data_test, None, mis_herramientas)
+data_test_limpio = entrenadorModelos.apply_preprocessing(config, data_test, None, mis_herramientas)
 
 # --- Separar atributos (X) de la clase real (Y) ---
 X_test = data_test_limpio.iloc[:, :-1].values  # Todas las columnas menos la última
