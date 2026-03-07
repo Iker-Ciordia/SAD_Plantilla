@@ -11,7 +11,11 @@
     "step": 2
   },
   "hyperparametersDecisionTree": {
-
+    "min_depth": 1,
+    "max_depth": 10,
+    "min_samples_split": 10,
+    "min_samples_leaf": 5,
+    "criterion":  ["gini", "entropy"]
   },
   "hyperparametersRandomForest": {
 

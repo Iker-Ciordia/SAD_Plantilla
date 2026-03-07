@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import numpy as np
 import pandas as pd
+from sklearn.impute import KNNImputer
 from sklearn.metrics import f1_score
 
 
@@ -31,7 +32,7 @@ def load_data(file, columna_target):
     return data
 
 
-def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_guardadas=None): #TODO Cambiar funcion a que solo preprocese un Dataset (todos con fit_transform aunque con pocos datos tenga sesgo)
+def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_guardadas=None):
     """
     Aplica el preprocesado evitando la fuga de datos (Data Leakage).
     Aprende reglas en train, las aplica ciegamente en dev.
@@ -224,7 +225,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         return reordenar(data_train)  # En modo test, solo devolvemos el test limpio
 
 
-def calculate_metrics(y_dev, y_pred): #TODO Habría que diseñarlo de tal forma que en el JSON se pueda elegir qué métricas evaluar
+def calculate_metrics(y_dev, y_pred):
     """
     Función para calcular el F-score
     :param y_dev: Valores reales
@@ -308,6 +309,20 @@ def kNN(data_train, data_dev, k, weights, p):
     
     return y_dev, y_pred, classifier #Devolvemos el classifier (el modelo) para poder quedarnos con aquel que sea el mejor
 
+def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples_leaf, criterion): #TODO Realizar el algoritmo en si de DecisionTree
+    """
+    Función para implementar el algoritmo DecisionTree con datos ya preprocesados y divididos
+    """
+
+def calcular_impureza(y, criterion): #TODO hay que calcular la impureza con entropia o Gini depende de lo que se le pase
+    if len(y) == 0: return 0
+    probs = y.value_counts(normalize=True)
+
+    if criterion.lower() == "gini":
+        return 1 - np.sum(probs ** 2)
+    else:
+        return -np.sum(probs * np.log2(probs + 1e-9))
+
 def guardar_resultados_csv(k, p, weights, y_dev, y_pred):
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
@@ -338,7 +353,7 @@ def guardar_resultados_csv(k, p, weights, y_dev, y_pred):
         # Guardamos los valores redondeados a 4 decimales
         writer.writerow([combinacion, f"{acc:.4f}", f"{prec:.4f}", f"{rec:.4f}", f"{f1:.4f}"])
 
-if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del preprocesado (no me ha dado tiempo a probarlo)
+if __name__ == "__main__":
     import sys
     import json
     from sklearn.model_selection import train_test_split
@@ -380,6 +395,10 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
     # --- ENRUTADOR DE ALGORITMOS ---
     y_dev, y_pred = None, None
 
+
+    ##########################
+    #  Empieza algoritmo KNN #
+    ##########################
     if algoritmo == "KNN":
         print("\n[->] Ejecutando modelo: kNN")
 
@@ -433,7 +452,7 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
 
         # Creamos un diccionario (el paquete final) con el modelo a usar para test y las herramientas de preprocesado utilizadas con train y dev
         paquete_final = {
-            'modelo_knn': mejor_modelo,
+            'modelo': mejor_modelo,
             'herramientas_preproceso': mis_herramientas
         }
         nombre_archivo = 'mejor_modelo_knn.pkl'
@@ -442,11 +461,58 @@ if __name__ == "__main__": #TODO Falta por probar que funcione bien el tema del 
         pickle.dump(paquete_final, archivo)
         archivo.close()
 
-    elif algoritmo == "DecisionTree":
+    ###################################
+    #  Empieza algoritmo DecisionTree #
+    ###################################
+    elif algoritmo == "DecisionTree": #TODO Mirar que este bien hecho
         print("\n[->] Ejecutando modelo: Árbol de Decisión")
-        # TODO: Leer hyperparametersDecisionTree del JSON
-        # TODO: y_dev, y_pred = decisionTree(data_train, data_dev, max_depth, ...)
-        pass
+        # Leemos los rangos del JSON (con valores por defecto por si acaso)
+        hiper_DecisionTree = config.get("hyperparametersDecisionTree", {})
+        min_depth = hiper_DecisionTree.get("min_depth", 1)
+        max_depth = hiper_DecisionTree.get("max_depth", 10)
+        min_samples_split = hiper_DecisionTree.get("min_samples_split", 5)
+        min_samples_leaf = hiper_DecisionTree.get("min_samples_leaf", 5)
+        criterion_lista = hiper_DecisionTree.get("criterion", "Gini")
+
+        # Por seguridad: si criterion_lista es un solo string, lo convertimos a lista
+        if isinstance(criterion_lista, str):
+            pesos_lista = [criterion_lista]
+
+        # Borramos el CSV antiguo si existe para empezar limpios
+        import os
+        if os.path.exists('resultados.csv'):
+            os.remove('resultados.csv')
+
+        mejor_f1 = -1.0
+        mejor_modelo = None
+        mejores_hiperparametros = ""
+        # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
+        # 2. Bucle interno de hiperparámetros (Grid Search)
+        for depth in range(min_depth, max_depth + 1):
+            for crit in criterion_lista:
+                print(f"\n--------------------------------------------------")
+                print(
+                    f"--> Evaluando combinación: max_depth={depth}, min_samples_split={min_samples_split}, min_samples_leaf={min_samples_leaf}, criterion={crit}")
+
+                # Llamamos a la función con los parámetros de esta iteración
+                y_dev, y_pred, modelo_entrenado = decisionTree(data_train,data_dev, max_depth=depth, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, criterion=crit)
+
+                # Mostramos y guardamos resultados de ESTA combinación
+                print(calculate_confusion_matrix(y_dev, y_pred))
+
+                # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
+                f1_actual = calculate_metrics(y_dev, y_pred)
+
+                if f1_actual > mejor_f1:
+                    mejor_f1 = f1_actual
+                    mejor_modelo = modelo_entrenado
+                    mejores_hiperparametros = f"depth={depth}, split={min_samples_split}, leaf={min_samples_leaf}, crit={crit}"
+                    print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+
+                # CUIDADO AQUÍ: Hay que adaptar que la función guardar_resultados_csv acepte estos nuevos parámetros
+                guardar_resultados_csv(depth, min_samples_split, min_samples_leaf, crit, y_dev, y_pred)
+        print(f"\n==================================================")
+        print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
 
     elif algoritmo == "RandomForest":
         print("\n[->] Ejecutando modelo: Random Forest")

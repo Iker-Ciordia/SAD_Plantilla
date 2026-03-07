@@ -11,7 +11,11 @@
     "step": 2
   },
   "hyperparametersDecisionTree": {
-
+    "min_depth": 1, //Numero minimo de niveles que queremos que tenga nuestro arbol
+    "max_depth": 10, //Numero maximo de niveles que queremos que tenga nuestro arbol
+    "min_samples_split": 10, //Numero minimo de muestras que queremos que tenga una hoja para que se pueda dividir
+    "min_samples_leaf": 5, //Controla que al hacer la division no se queden 1 o 2 muestras solas en una hoja
+    "criterion": ["gini", "entropy"] //Gini o Entropy que el usuario decida
   },
   "hyperparametersRandomForest": {
 

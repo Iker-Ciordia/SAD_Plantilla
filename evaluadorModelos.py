@@ -16,7 +16,7 @@ paquete_cargado = sys.argv[3]
 config = sys.argv[4]
 
 #Cargamos del mejor modelo las herramientas utilizadas
-modelo_knn = paquete_cargado['modelo_knn']
+modelo_knn = paquete_cargado['modelo']
 mis_herramientas = paquete_cargado['herramientas_preproceso']
 
 # 2. Cargar el test secreto
