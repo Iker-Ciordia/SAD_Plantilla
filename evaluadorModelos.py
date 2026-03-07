@@ -12,8 +12,14 @@ if len(sys.argv) < 5 or "-c" not in sys.argv:
 # Asignamos las variables desde la consola para que sea más fácil de leer
 fichero = sys.argv[1]
 columna_objetivo = sys.argv[2]
-paquete_cargado = sys.argv[3]
-config = sys.argv[4]
+archivo_pickle = sys.argv[3]
+indice_c = sys.argv.index("-c")
+config = sys.argv[indice_c + 1]
+
+
+print(f"Cargando modelo desde {archivo_pickle}...")
+with open(archivo_pickle, 'rb') as f:
+    paquete_cargado = pickle.load(f)
 
 #Cargamos del mejor modelo las herramientas utilizadas
 modelo_knn = paquete_cargado['modelo']

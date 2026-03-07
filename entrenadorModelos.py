@@ -17,6 +17,7 @@ def load_data(file, columna_target):
 
     # Comprobamos que la columna realmente existe en el CSV
     if columna_target not in data.columns:
+        import sys
         print(f"Error: La columna '{columna_target}' no se ha encontrado en el archivo.")
         sys.exit(1)
 
@@ -134,13 +135,13 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 herramientas['vectorizers'] = {} #Preparamos la mochila para aceptar una nueva herramienta
                 # --- Selección de estrategia ---
                 if metodo_texto == "tf-idf":
-                    vectorizer = TfidfVectorizer()
+                    vectorizer_class = TfidfVectorizer()
                     prefijo = "tfidf"
                 elif metodo_texto == "frequency":
-                    vectorizer = CountVectorizer()  # Cuenta frecuencias: 1, 2, 3...
+                    vectorizer_class = CountVectorizer()  # Cuenta frecuencias: 1, 2, 3...
                     prefijo = "frequency"
                 elif metodo_texto == "one-hot":
-                    vectorizer = CountVectorizer(binary=True)  # One-Hot: 0 o 1
+                    vectorizer_class = lambda: CountVectorizer(binary=True)  # One-Hot: 0 o 1
                     prefijo = "onehot"
 
                 herramientas['prefijo_texto'] = prefijo
@@ -149,7 +150,16 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 prefijo = herramientas['prefijo_texto'] #Cargamos con qué tipo se preprocesó el train
 
             for col in text_cols:
+                # --- IMPUTACIÓN PARA COLUMNAS DE TEXTO ---
+                # Rellenamos los huecos (NaN) de las columnas con texto con la palabra "desconocido" antes de vectorizar
+                data_train[col] = data_train[col].fillna("desconocido")
+                if data_dev is not None:
+                    data_dev[col] = data_dev[col].fillna("desconocido")
+                # ----------------------------------------
+
+
                 if is_train:
+                    vectorizer = vectorizer_class()
                     # Transformamos el texto (asegurando string para evitar errores con NaNs)
                     # ¡ATENCIÓN! Train aprende el diccionario, Dev se adapta. Aplica el mismo criterio de no contaminación que el escalado
                     matrix_train = vectorizer.fit_transform(data_train[col].astype(str))

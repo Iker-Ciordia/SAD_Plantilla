@@ -26,11 +26,11 @@
   "preprocessing": {
     "drop_features": [],
     "categorical_features_not_convert": [],
-    "categorical_features_convert": [],
+    "categorical_features_convert": ["island", "sex"],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "standard",
-    "text_preprocess": "tf-idf",
+    "text_preprocess": "one-hot",
     "sampling": "undersampling"
   }
 }
