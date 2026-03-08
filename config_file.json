@@ -1,5 +1,5 @@
 {
-  "entrenar": 0,
+  "dataset_language": "english",
   "algorithm": "KNN",
   "metric_to_evaluate": "micro",
   "hyperparametersKNN": {

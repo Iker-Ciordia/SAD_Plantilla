@@ -3,6 +3,15 @@ import numpy as np
 import pandas as pd
 from sklearn.impute import KNNImputer
 from sklearn.metrics import f1_score
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+nltk.download('stopwords', quiet=True)
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
+nltk.download('wordnet', quiet=True)
 
 
 def load_data(file, columna_target):
@@ -53,7 +62,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     config = json.load(file)
 
     # --- EL INTERRUPTOR INTELIGENTE ---
-    is_train = herramientas_guardadas is None
+    is_train = herramientas_guardadas is None #Si la variable herramientas... tiene un valor, is_train será True, si es None, será False
 
     opciones = config.get("preprocessing", {}) #Nos quedamos con el segundo JSON de parámetros de preprocesado dentro del principal
     print(f"Aplicando preprocesado desde {config_file}...")
@@ -65,7 +74,11 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         print(f"Aplicando preprocesado (MODO TEST) usando herramientas guardadas...")
         herramientas = herramientas_guardadas  # Cargamos la mochila
 
-    #Eliminar atributos innecesarios (aquellos que no queramos usar para el entrenamiento)
+
+    ##########################################
+    #  Eliminación de atributos innecesarios #
+    ##########################################
+    # (aquellos que no queramos usar para el entrenamiento)
     if "drop_features" in opciones and len(opciones["drop_features"]) > 0: #Si existe una llave "drop..." y NO está vacía
         columnas_a_borrar = []
         for col in opciones["drop_features"]: #Para toda columna que se quiera eliminar
@@ -83,6 +96,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     columnas_x = data_train.columns[:-1] #Desde la primera a la penúltima
     columna_y = data_train.columns[-1] #La última (previamente hemos ordenado para que la objetivo siempre esté al final
 
+    ####################################
+    #  Imputación de valores faltantes #
+    ####################################
     #Tratar valores faltantes
     if opciones.get("missing_values") == "impute": #Si la clave "missing..." dice que hay que imputar valores
         estrategia = opciones.get("impute_strategy", "mean")  #Cogemos el valor que se indique en la estrategía.
@@ -118,8 +134,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 cols = [c for c in herramientas['imputer_cols'] if c in data_train.columns]
                 data_train[cols] = imputer.transform(data_train[cols]) #Aunque la variable se llama "data_train" realmente sería la de test.
 
-
-    # Preprocesamiento de texto (TF-IDF, BoW/frecuency o Binario/one-hot)
+    ########################################################################
+    #  Preprocesamiento de texto (TF-IDF, BoW/frecuency o Binario/one-hot) # TODO Preguntar si hay que usar One-Hot para el cat2num en KNN y Label-Encoding en Decision Tree o no hace falta diferenciarlos
+    ########################################################################
     metodo_texto = opciones.get("text_preprocess")
     if metodo_texto in ["tf-idf", "frequency", "one-hot"]:
         # 1. Leemos la lista exacta de columnas que queremos convertir a TF-IDF/BOW desde el JSON
@@ -135,10 +152,10 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 herramientas['vectorizers'] = {} #Preparamos la mochila para aceptar una nueva herramienta
                 # --- Selección de estrategia ---
                 if metodo_texto == "tf-idf":
-                    vectorizer_class = TfidfVectorizer()
+                    vectorizer_class = TfidfVectorizer
                     prefijo = "tfidf"
                 elif metodo_texto == "frequency":
-                    vectorizer_class = CountVectorizer()  # Cuenta frecuencias: 1, 2, 3...
+                    vectorizer_class = CountVectorizer  # Cuenta frecuencias: 1, 2, 3...
                     prefijo = "frequency"
                 elif metodo_texto == "one-hot":
                     vectorizer_class = lambda: CountVectorizer(binary=True)  # One-Hot: 0 o 1
@@ -152,9 +169,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             for col in text_cols:
                 # --- IMPUTACIÓN PARA COLUMNAS DE TEXTO ---
                 # Rellenamos los huecos (NaN) de las columnas con texto con la palabra "desconocido" antes de vectorizar
-                data_train[col] = data_train[col].fillna("desconocido")
+                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language']))
                 if data_dev is not None:
-                    data_dev[col] = data_dev[col].fillna("desconocido")
+                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language']))
                 # ----------------------------------------
 
 
@@ -184,8 +201,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                     df_dev = pd.DataFrame(matrix_dev.toarray(), columns=nombres_cols, index=data_dev.index)
                     data_dev = data_dev.drop(columns=[col]).join(df_dev) # Eliminamos la original y unimos las nuevas
 
-
-    # Escalado de valores
+    #######################
+    # Escalado de valores #
+    #######################
     metodo_escalado = opciones.get("scaling") #Cogemos el valor de escalado del JSON
     if metodo_escalado in ["max-min", "max", "z-score", "standard"]:
         if is_train:
@@ -233,6 +251,48 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         return reordenar(data_train), reordenar(data_dev), herramientas
     else:
         return reordenar(data_train)  # En modo test, solo devolvemos el test limpio
+
+
+def limpiar_texto(texto, idioma='english'):
+    """Limpia, tokeniza, quita stopwords y lematiza un texto."""
+    import pandas as pd
+    # 1. Tratar nulos
+    if pd.isna(texto) or str(texto).strip() == "": #Si la casilla está vacía o si solo tiene espacios en blanco
+        return "desconocido"
+
+    # 2. Minúsculas
+    texto = str(texto).lower()
+
+    # 3. Tokenizar
+    tokens = word_tokenize(texto)
+
+    # 4. Eliminar Stopwords y signos de puntuación (.isalnum() filtra comas, puntos...)
+    stop_words = set(stopwords.words(idioma))
+    tokens_limpios = []
+    for w in tokens:
+        # Si la palabra NO es una stopword Y solo contiene letras/números (no es un signo de puntuación)
+        if w not in stop_words and w.isalnum():
+            tokens_limpios.append(w)  # La guardamos
+
+    tokens_lematizados = []
+    # 5. Lematizar (Convertir verbos/plurales a su raíz)
+    if idioma == 'english':
+        lemmatizer = WordNetLemmatizer()
+        for w in tokens_limpios:
+            raiz = lemmatizer.lemmatize(w)  # Calculamos su raíz
+            tokens_lematizados.append(raiz)  # La guardamos
+
+    else: #Para el resto de idiomas que no sean inglés no tenemos diccionario, usamos un truqui truqui que consiste en recortar las palabras
+        from nltk.stem import SnowballStemmer
+        stemmer = SnowballStemmer(idioma)
+        for w in tokens_limpios:
+            raiz = stemmer.stem(w) #Corta los sufijos ("corriendo" -> "corr")
+            tokens_lematizados.append(raiz)
+
+
+    # 6. Devolver texto limpio y unido por espacios (o 'desconocido' si se quedó vacío)
+    resultado = " ".join(tokens_lematizados)
+    return resultado if resultado != "" else "desconocido"
 
 
 def calculate_metrics(y_dev, y_pred):
@@ -324,7 +384,7 @@ def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples
     Función para implementar el algoritmo DecisionTree con datos ya preprocesados y divididos
     """
 
-def calcular_impureza(clase, criterion):
+def calcular_impureza(clase, criterion): #TODO Supongo que habrá que eliminarlo
     if len(clase) == 0: return 0 #Si la columna no tiene instancias devolvemos 0
     probs = clase.value_counts(normalize=True) # Sacamos la probabilidad de ambas clases de la columna
 
@@ -335,7 +395,7 @@ def calcular_impureza(clase, criterion):
                                                       # El 1e-9 es por si de casualidad la probabilidad es 0 para que no de error y explote
 
 
-def ganancia_informacion(data, atributo, objetivo, criterion):
+def ganancia_informacion(data, atributo, objetivo, criterion): #TODO Supongo que habrá que eliminarlo
     # 1. Calculamos la impureza del nodo actual (padre)
     impureza_padre = calcular_impureza(data[objetivo], criterion)
 
@@ -351,7 +411,7 @@ def ganancia_informacion(data, atributo, objetivo, criterion):
     # 3. La ganancia es lo que hemos "limpiado" al dividir
     return impureza_padre - impureza_hijos
 
-def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adaptar la funcion para guaradar otro tipo de modelos o hacer otra funcion
+def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adaptar la funcion para guardara otro tipo de modelos o hacer otra funcion
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
     import csv
@@ -419,6 +479,18 @@ if __name__ == "__main__":
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
         data_train, data_dev, mis_herramientas = apply_preprocessing(config_file, data_train, data_dev) #Preprocesamos train y dev y obtenemos las herramientas usadas pa cuando toque con test
+
+    #Bloque para ver los datos preprocesados
+    try:
+        # Crea la carpeta en el directorio actual
+        import os
+        os.mkdir("datos_preprocesados")
+        print(f"Directorio 'datos_preprocesados' creado exitosamente.")
+    except FileExistsError:
+        print(f"Error: El directorio 'datos_preprocesados' ya existe.")
+    data_train.to_csv("datos_preprocesados/train_preprocesado.csv", index=False)
+    if data_dev is not None:
+        data_dev.to_csv("datos_preprocesados/dev_preprocesado.csv", index=False)
 
     # --- ENRUTADOR DE ALGORITMOS ---
     y_dev, y_pred = None, None
@@ -515,7 +587,6 @@ if __name__ == "__main__":
         mejor_modelo = None
         mejores_hiperparametros = ""
         # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
-        # 2. Bucle interno de hiperparámetros (Grid Search)
         for depth in range(min_depth, max_depth + 1):
             for crit in criterion_lista:
                 print(f"\n--------------------------------------------------")
