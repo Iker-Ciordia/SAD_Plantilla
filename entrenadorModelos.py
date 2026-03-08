@@ -7,6 +7,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from sklearn.tree import DecisionTreeClassifier
 
 nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
@@ -379,39 +380,37 @@ def kNN(data_train, data_dev, k, weights, p):
     
     return y_dev, y_pred, classifier #Devolvemos el classifier (el modelo) para poder quedarnos con aquel que sea el mejor
 
-def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples_leaf, criterion): #TODO Realizar el algoritmo en si de DecisionTree
+def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples_leaf, criterion):
     """
     Función para implementar el algoritmo DecisionTree con datos ya preprocesados y divididos
     """
+    # Seleccionamos las características y la clase del conjunto de datos de entrenamiento.
+    # El .values se usa para convertirlo de DataFrame a matriz normal, que es lo que usa Skicit.
+    X_train = data_train.iloc[:, :-1].values  # Todas las columnas menos la última (atributos que se van a usar para entrenar)
+    y_train = data_train.iloc[:, -1].values  # Última columna (atributo a predecir). Sí o sí está en la última columna
 
-def calcular_impureza(clase, criterion): #TODO Supongo que habrá que eliminarlo
-    if len(clase) == 0: return 0 #Si la columna no tiene instancias devolvemos 0
-    probs = clase.value_counts(normalize=True) # Sacamos la probabilidad de ambas clases de la columna
+    # Seleccionamos las características y la clase del conjunto de datos de dev.
+    X_dev = data_dev.iloc[:, :-1].values
+    y_dev = data_dev.iloc[:, -1].values
 
-    if criterion.lower() == "gini": # Se ha elegido gini
-        return 1 - np.sum(probs ** 2) # Se aplica la formula de gini
-    else: # Sino se ha elegido entropia
-        return -np.sum(probs * np.log2(probs + 1e-9)) # Se aplica la formula de la entropia con logaritmos
-                                                      # El 1e-9 es por si de casualidad la probabilidad es 0 para que no de error y explote
+    # 1. Instanciamos el modelo pasándole tus hiperparámetros
+    modelo_arbol = DecisionTreeClassifier(
+        criterion=criterion.lower(),  # 'gini' o 'entropy'
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf
+    )
 
+    modelo_arbol.fit(X_train, y_train)  # Entrenamos el modelo con los datasets de training
+                                        # X_train son las instancias con atributos de entrenamiento
+                                        # y_train es la clase real de dicha instancia
 
-def ganancia_informacion(data, atributo, objetivo, criterion): #TODO Supongo que habrá que eliminarlo
-    # 1. Calculamos la impureza del nodo actual (padre)
-    impureza_padre = calcular_impureza(data[objetivo], criterion)
+    # Predecimos los resultados
+    y_pred = modelo_arbol.predict(X_dev)  # Probamos el modelo con el dataset de dev (sin darle la clase real)
 
-    # 2. Calculamos la impureza de los nodos hijos ponderada por su tamaño
-    clases = data[atributo].unique() # Clases unicas
-    impureza_hijos = 0
+    return y_dev, y_pred, modelo_arbol  # Devolvemos el classifier (el modelo) para poder quedarnos con aquel que sea el mejor
 
-    for clase in clases:
-        subset = data[data[atributo] == clase] # Crea una "sub-tabla" donde coge las filas donde sale la clase en el atributo
-        peso = len(subset) / len(data) # Calculamos el peso de cada clase
-        impureza_hijos += peso * calcular_impureza(subset[objetivo], criterion) # Sumamos a la impureza total
-
-    # 3. La ganancia es lo que hemos "limpiado" al dividir
-    return impureza_padre - impureza_hijos
-
-def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adaptar la funcion para guardara otro tipo de modelos o hacer otra funcion
+def guardar_resultados_csv(combinacion_Params, y_dev, y_pred): #TODO Habria que adaptar la funcion para guardara otro tipo de modelos o hacer otra funcion
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
     import csv
@@ -428,7 +427,6 @@ def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adapt
     rec = recall_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
     f1 = f1_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
 
-    combinacion = f"k={k}, p={p}, {weights}"
     archivo_csv = 'resultados.csv'
 
     # Si el archivo no existe, creamos la cabecera primero
@@ -439,7 +437,7 @@ def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adapt
         if cabecera:
             writer.writerow(['Combinacion', 'Accuracy', 'Precision', 'Recall', 'F_score'])
         # Guardamos los valores redondeados a 4 decimales
-        writer.writerow([combinacion, f"{acc:.4f}", f"{prec:.4f}", f"{rec:.4f}", f"{f1:.4f}"])
+        writer.writerow([combinacion_Params, f"{acc:.4f}", f"{prec:.4f}", f"{rec:.4f}", f"{f1:.4f}"])
 
 if __name__ == "__main__":
     import sys
@@ -544,7 +542,8 @@ if __name__ == "__main__":
                         mejores_hiperparametros = f"k={k}, p={p}, w={weights}"
                         print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
 
-                    guardar_resultados_csv(k, p, weights, y_dev, y_pred)
+                    combinacion_Params = f"k={k}, p={p}, {weights}"
+                    guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
         print(f"\n==================================================")
         print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
 
@@ -608,8 +607,8 @@ if __name__ == "__main__":
                     mejores_hiperparametros = f"depth={depth}, split={min_samples_split}, leaf={min_samples_leaf}, crit={crit}"
                     print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
 
-                # CUIDADO AQUÍ: Hay que adaptar que la función guardar_resultados_csv acepte estos nuevos parámetros
-                guardar_resultados_csv(depth, min_samples_split, min_samples_leaf, crit, y_dev, y_pred)
+                combinacion_Params = f"depth={depth}, split={min_samples_split}, leaf={min_samples_leaf}, crit={crit}"
+                guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
         print(f"\n==================================================")
         print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
 
