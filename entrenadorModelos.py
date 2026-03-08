@@ -324,16 +324,34 @@ def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples
     Función para implementar el algoritmo DecisionTree con datos ya preprocesados y divididos
     """
 
-def calcular_impureza(y, criterion): #TODO hay que calcular la impureza con entropia o Gini depende de lo que se le pase
-    if len(y) == 0: return 0
-    probs = y.value_counts(normalize=True)
+def calcular_impureza(clase, criterion):
+    if len(clase) == 0: return 0 #Si la columna no tiene instancias devolvemos 0
+    probs = clase.value_counts(normalize=True) # Sacamos la probabilidad de ambas clases de la columna
 
-    if criterion.lower() == "gini":
-        return 1 - np.sum(probs ** 2)
-    else:
-        return -np.sum(probs * np.log2(probs + 1e-9))
+    if criterion.lower() == "gini": # Se ha elegido gini
+        return 1 - np.sum(probs ** 2) # Se aplica la formula de gini
+    else: # Sino se ha elegido entropia
+        return -np.sum(probs * np.log2(probs + 1e-9)) # Se aplica la formula de la entropia con logaritmos
+                                                      # El 1e-9 es por si de casualidad la probabilidad es 0 para que no de error y explote
 
-def guardar_resultados_csv(k, p, weights, y_dev, y_pred):
+
+def ganancia_informacion(data, atributo, objetivo, criterion):
+    # 1. Calculamos la impureza del nodo actual (padre)
+    impureza_padre = calcular_impureza(data[objetivo], criterion)
+
+    # 2. Calculamos la impureza de los nodos hijos ponderada por su tamaño
+    clases = data[atributo].unique() # Clases unicas
+    impureza_hijos = 0
+
+    for clase in clases:
+        subset = data[data[atributo] == clase] # Crea una "sub-tabla" donde coge las filas donde sale la clase en el atributo
+        peso = len(subset) / len(data) # Calculamos el peso de cada clase
+        impureza_hijos += peso * calcular_impureza(subset[objetivo], criterion) # Sumamos a la impureza total
+
+    # 3. La ganancia es lo que hemos "limpiado" al dividir
+    return impureza_padre - impureza_hijos
+
+def guardar_resultados_csv(k, p, weights, y_dev, y_pred): #TODO Habria que adaptar la funcion para guaradar otro tipo de modelos o hacer otra funcion
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
     import csv
