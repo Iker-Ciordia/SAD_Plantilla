@@ -1,7 +1,7 @@
 {
   "dataset_language": "english",
-  "algorithm": "KNN",
-  "metric_to_evaluate": "micro",
+  "algorithm": "RandomForest",
+  "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
     "p_max": 2,
@@ -12,13 +12,13 @@
   },
   "hyperparametersDecisionTree": {
     "min_depth": 1,
-    "max_depth": 10,
-    "min_samples_split": 10,
+    "max_depth": 50,
+    "min_samples_split": 5,
     "min_samples_leaf": 5,
     "criterion":  ["gini", "entropy"]
   },
   "hyperparametersRandomForest": {
-
+    "n_estimators": 100
   },
   "hyperparametersNaiveBayes": {
 
@@ -26,11 +26,12 @@
   "preprocessing": {
     "drop_features": [],
     "categorical_features_not_convert": [],
-    "categorical_features_convert": ["island", "sex"],
+    "categorical_features_convert": ["message"],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "standard",
-    "text_preprocess": "one-hot",
-    "sampling": "undersampling"
+    "text_preprocess": "tf-idf",
+    "balance": 0.4,
+    "sampling": "oversampling"
   }
 }

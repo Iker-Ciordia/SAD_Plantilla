@@ -22,7 +22,7 @@ with open(archivo_pickle, 'rb') as f:
     paquete_cargado = pickle.load(f)
 
 #Cargamos del mejor modelo las herramientas utilizadas
-modelo_knn = paquete_cargado['modelo']
+modelo = paquete_cargado['modelo']
 mis_herramientas = paquete_cargado['herramientas_preproceso']
 
 # 2. Cargar el test secreto
@@ -36,13 +36,17 @@ data_test_limpio = entrenadorModelos.apply_preprocessing(config, data_test, None
 X_test = data_test_limpio.iloc[:, :-1].values  # Todas las columnas menos la última
 y_test_real = data_test_limpio.iloc[:, -1].values # Solo la última columna
 
-# 4. Predecir (¡Solo le pasamos la X al modelo!)
-predicciones = modelo_knn.predict(X_test)
+# 4. Predecir
+predicciones = modelo.predict(X_test)
 
 #Printear resultados
 df_resultados = pd.DataFrame({
     'Clase Real (Ground Truth)': y_test_real,
     'Predicción del Modelo': predicciones
 })
+
 print("\n--- RESULTADOS DE LAS PREDICCIONES ---")
 print(df_resultados.to_string()) # to_string() fuerza a imprimir todas las filas sin cortarlas
+
+#Obtener matriz de confusión
+print(entrenadorModelos.calculate_confusion_matrix(predicciones, y_test_real))

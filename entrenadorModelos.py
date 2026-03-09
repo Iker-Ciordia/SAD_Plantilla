@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer
 from sklearn.metrics import f1_score
 import nltk
@@ -22,7 +23,7 @@ def load_data(file, columna_target):
     :param target_column: Nombre de la columna que contiene las clases a predecir
     :return: Datos del fichero con la columna objetivo al final
     """
-    data = pd.read_csv(file)
+    data = pd.read_csv(file, sep='\t')
     #print(data)
 
     # Comprobamos que la columna realmente existe en el CSV
@@ -203,7 +204,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                     data_dev = data_dev.drop(columns=[col]).join(df_dev) # Eliminamos la original y unimos las nuevas
 
     #######################
-    # Escalado de valores #
+    # Escalado de valores # TODO Según Aitziber es buena idea permitir no escalar todas las columnas y que quede a elección del usuario.
     #######################
     metodo_escalado = opciones.get("scaling") #Cogemos el valor de escalado del JSON
     if metodo_escalado in ["max-min", "max", "z-score", "standard"]:
@@ -237,6 +238,39 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             scaler = herramientas['scaler']
             cols = [c for c in herramientas['scaler_cols'] if c in data_train.columns]
             data_train[cols] = scaler.transform(data_train[cols]) #Aunque se llame "train" realmente sería el dataset de test.
+
+    #######################
+    #  Balanceo de datos  #
+    #######################
+    metodo_balanceo = opciones.get("sampling")
+    ratio_balanceo = opciones.get("balance", "auto") #Si no hay nada por defecto es auto, que es 50-50
+
+    if is_train and metodo_balanceo is not None:
+        print(f" -> Aplicando balanceo de clases tipo: {metodo_balanceo}")
+
+        # SMOTE necesita las predicciones (X) y la clase objetivo (Y) separadas
+        X_train_temp = data_train.drop(columns=[columna_y])
+        y_train_temp = data_train[columna_y]
+
+        # Elegimos la herramienta
+        if metodo_balanceo == "oversampling":
+            from imblearn.over_sampling import SMOTE
+            balanceador = SMOTE(sampling_strategy=ratio_balanceo)
+        elif metodo_balanceo == "undersampling":
+            from imblearn.under_sampling import RandomUnderSampler
+            balanceador = RandomUnderSampler(sampling_strategy=ratio_balanceo)
+        else:
+            print("[!] Método de balanceo no reconocido. Saltando paso.")
+
+        if balanceador is not None:
+            # Generamos los nuevos datos balanceados
+            X_bal, y_bal = balanceador.fit_resample(X_train_temp, y_train_temp)
+
+            # Volvemos a fusionarlos en el DataFrame data_train original
+            data_train = pd.DataFrame(X_bal, columns=X_train_temp.columns)
+            data_train[columna_y] = y_bal
+
+            print(f"[+] Distribución final de clases en TRAIN:\n{data_train[columna_y].value_counts().to_string()}")
 
     # Volvemos a asegurar que la columna objetivo (y) esté al final tras las posibles modificaciones
     # Reordenar por seguridad (Objetivo siempre al final)
@@ -328,7 +362,7 @@ def calculate_metrics(y_dev, y_pred):
 
 
 
-def calculate_confusion_matrix(y_dev, y_pred): # TODO las métricas no sé si también hay que permitir elegir cuál usar. Supongo que sí
+def calculate_confusion_matrix(y_dev, y_pred): #
     """
     Función para calcular la matriz de confusión
     :param y_dev: Valores reales
@@ -385,7 +419,7 @@ def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples
     Función para implementar el algoritmo DecisionTree con datos ya preprocesados y divididos
     """
     # Seleccionamos las características y la clase del conjunto de datos de entrenamiento.
-    # El .values se usa para convertirlo de DataFrame a matriz normal, que es lo que usa Skicit.
+    # El .values se usa para convertirlo de DataFrame a matriz normal, que es lo que usa Scikit.
     X_train = data_train.iloc[:, :-1].values  # Todas las columnas menos la última (atributos que se van a usar para entrenar)
     y_train = data_train.iloc[:, -1].values  # Última columna (atributo a predecir). Sí o sí está en la última columna
 
@@ -393,7 +427,7 @@ def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples
     X_dev = data_dev.iloc[:, :-1].values
     y_dev = data_dev.iloc[:, -1].values
 
-    # 1. Instanciamos el modelo pasándole tus hiperparámetros
+    # 1. Instanciamos el modelo pasándole los hiperparámetros
     modelo_arbol = DecisionTreeClassifier(
         criterion=criterion.lower(),  # 'gini' o 'entropy'
         max_depth=max_depth,
@@ -410,7 +444,36 @@ def decisionTree(data_train, data_dev, max_depth, min_samples_split, min_samples
 
     return y_dev, y_pred, modelo_arbol  # Devolvemos el classifier (el modelo) para poder quedarnos con aquel que sea el mejor
 
-def guardar_resultados_csv(combinacion_Params, y_dev, y_pred): #TODO Habria que adaptar la funcion para guardara otro tipo de modelos o hacer otra funcion
+def randomForest(data_train, data_dev, n_estimators, max_depth, min_samples_split, min_samples_leaf, criterion):
+    """
+        Función para implementar el algoritmo Random Forest con datos ya preprocesados
+    """
+    # Separar atributos y clase
+    X_train = data_train.iloc[:, :-1].values
+    y_train = data_train.iloc[:, -1].values
+    X_dev = data_dev.iloc[:, :-1].values
+    y_dev = data_dev.iloc[:, -1].values
+
+    # Instanciar el modelo con sus hiperparámetros
+    from sklearn.ensemble import RandomForestClassifier
+    modelo_forest = RandomForestClassifier(
+        n_estimators=n_estimators,  # <-- ¡El nuevo parámetro estrella!
+        criterion=criterion.lower(),
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf
+    )
+
+    modelo_forest.fit(X_train, y_train) # Entrenamos el modelo con los datasets de training
+                                        # X_train son las instancias con atributos de entrenamiento
+                                        # y_train es la clase real de dicha instancia
+
+    # Predecimos los resultados
+    y_pred = modelo_forest.predict(X_dev)
+
+    return y_dev, y_pred, modelo_forest
+
+def guardar_resultados_csv(combinacion_Params, y_dev, y_pred):
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
     import csv
@@ -612,10 +675,87 @@ if __name__ == "__main__":
         print(f"\n==================================================")
         print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
 
+        import pickle
+
+        # Creamos un diccionario (el paquete final) con el modelo a usar para test y las herramientas de preprocesado utilizadas con train y dev
+        paquete_final = {
+            'modelo': mejor_modelo,
+            'herramientas_preproceso': mis_herramientas
+        }
+        nombre_archivo = 'mejor_modelo_decision_tree.pkl'
+
+        archivo = open(nombre_archivo, 'wb')
+        pickle.dump(paquete_final, archivo)
+        archivo.close()
+
+    ###################################
+    #  Empieza algoritmo RandomForest #
+    ###################################
     elif algoritmo == "RandomForest":
         print("\n[->] Ejecutando modelo: Random Forest")
-        # TODO: Leer hyperparametersRandomForest del JSON
-        pass
+        # Leemos los rangos del JSON (con valores por defecto por si acaso)
+        hiper_RandomForest = config.get("hyperparametersDecisionTree", {})
+        n_estimators = hiper_RandomForest.get("n_estimators", 100)
+        min_depth = hiper_RandomForest.get("min_depth", 1)
+        max_depth = hiper_RandomForest.get("max_depth", 10)
+        min_samples_split = hiper_RandomForest.get("min_samples_split", 5)
+        min_samples_leaf = hiper_RandomForest.get("min_samples_leaf", 5)
+        criterion_lista = hiper_RandomForest.get("criterion", "Gini")
+
+        # Por seguridad: si criterion_lista es un solo string, lo convertimos a lista
+        if isinstance(criterion_lista, str):
+            pesos_lista = [criterion_lista]
+
+        # Borramos el CSV antiguo si existe para empezar limpios
+        import os
+
+        if os.path.exists('resultados.csv'):
+            os.remove('resultados.csv')
+
+        mejor_f1 = -1.0
+        mejor_modelo = None
+        mejores_hiperparametros = ""
+        # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
+        for depth in range(min_depth, max_depth + 1):
+            for crit in criterion_lista:
+                print(f"\n--------------------------------------------------")
+                print(
+                    f"--> Evaluando combinación: max_depth={depth}, min_samples_split={min_samples_split}, min_samples_leaf={min_samples_leaf}, criterion={crit}")
+
+                # Llamamos a la función con los parámetros de esta iteración
+                y_dev, y_pred, modelo_entrenado = randomForest(data_train, data_dev, n_estimators=n_estimators, max_depth=depth,
+                                                               min_samples_split=min_samples_split,
+                                                               min_samples_leaf=min_samples_leaf, criterion=crit)
+
+                # Mostramos y guardamos resultados de ESTA combinación
+                print(calculate_confusion_matrix(y_dev, y_pred))
+
+                # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
+                f1_actual = calculate_metrics(y_dev, y_pred)
+
+                if f1_actual > mejor_f1:
+                    mejor_f1 = f1_actual
+                    mejor_modelo = modelo_entrenado
+                    mejores_hiperparametros = f"depth={depth}, split={min_samples_split}, leaf={min_samples_leaf}, crit={crit}"
+                    print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+
+                combinacion_Params = f"depth={depth}, split={min_samples_split}, leaf={min_samples_leaf}, crit={crit}"
+                guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
+        print(f"\n==================================================")
+        print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
+
+        import pickle
+
+        # Creamos un diccionario (el paquete final) con el modelo a usar para test y las herramientas de preprocesado utilizadas con train y dev
+        paquete_final = {
+            'modelo': mejor_modelo,
+            'herramientas_preproceso': mis_herramientas
+        }
+        nombre_archivo = 'mejor_modelo_random_forest.pkl'
+
+        archivo = open(nombre_archivo, 'wb')
+        pickle.dump(paquete_final, archivo)
+        archivo.close()
 
     elif algoritmo == "NaiveBayes":
         print("\n[->] Ejecutando modelo: Naive Bayes")
