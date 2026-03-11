@@ -24,14 +24,15 @@
 
   },
   "preprocessing": {
+    "separator": ",",
     "drop_features": [],
-    "categorical_features_not_convert": [],
-    "categorical_features_convert": ["message"],
+    "categorical_features_convert": ["island", "sex"],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "standard",
-    "text_preprocess": "tf-idf",
+    "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+    "text_preprocess": "one-hot",
     "balance": 0.4,
-    "sampling": "oversampling"
+    "sampling": "None"
   }
 }

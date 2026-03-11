@@ -7,15 +7,15 @@
     "p_max": 2,
     "k_min": 1,
     "k_max": 7,
-    "w": ["uniform", "distance"],
+    "w": ["uniform", "distance"], //Se evalúa tanto con uniform como distance. El usuario no debería tocar esto porque el programa decide cuál es el mejor modelo.
     "step": 2
   },
   "hyperparametersDecisionTree": {
-    "min_depth": 1, //Numero minimo de niveles que queremos que tenga nuestro arbol
-    "max_depth": 10, //Numero maximo de niveles que queremos que tenga nuestro arbol
-    "min_samples_split": 10, //Numero minimo de muestras que queremos que tenga una hoja para que se pueda dividir
+    "min_depth": 1, //Número minimo de niveles que queremos que tenga nuestro arbol
+    "max_depth": 10, //Número máximo de niveles que queremos que tenga nuestro arbol
+    "min_samples_split": 10, //Número minimo de muestras que queremos que tenga una hoja para que se pueda dividir
     "min_samples_leaf": 5, //Controla que al hacer la division no se queden 1 o 2 muestras solas en una hoja
-    "criterion": ["gini", "entropy"] //Gini o Entropy que el usuario decida
+    "criterion": ["gini", "entropy"] //Se evalúa tanto con gini y entropy. El usuario no debería tocar esto porque el programa decide cuál es el mejor modelo.
   },
   "hyperparametersRandomForest": {
     "n_estimators": 10, //Cantidad de árboles a generar
@@ -24,14 +24,15 @@
 
   },
   "preprocessing": {
+    "separator": "," //Separador de los datos en el CSV. Actualmente "," porque es lo que más se usa, pero en el de SPAM/HAM se usas "\t" porque está separado por un tabulador.
     "drop_features": [], //Se meten los nombres de las columnas que se quiere eliminar y no se van a usar
-    "categorical_features": [], //Se meten los nombres de las columnas categóricas que NO hay que meter como TF-IDF/BOW (por ejemplo, columna con "Yes" y "No")
     "categorical_features_convert": [], //Se meten los nombres de las columnas categóricas que SÍ hay que meter como TF-IDF/BOW
     "missing_values": "impute", //impute, delete
     "impute_strategy": "mean", //median, mean, most_frequent
-    "scaling": "max-min", //max-min, max, standard/z-score
-    "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency
+    "scaling": "max-min", //max-min, max, standard/z-score (Cualquier otra cosa si no se quiere escalar)
+    "features_scale": [], //Se meten los nombres de las columnas que se quieran escalar. Si se deja vacío pero hay un escalador puesto, se escalan todas las columnas. Si no hay escalador, ninguna se escala.
+    "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM)
     "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria.
-    "sampling": "undersampling" //undersampling, oversampling
+    "sampling": "undersampling" //undersampling, oversampling (Cualquier otra cosa si no se quiere hacer balanceo)
   }
 }

@@ -23,8 +23,9 @@ def load_data(file, columna_target):
     :param target_column: Nombre de la columna que contiene las clases a predecir
     :return: Datos del fichero con la columna objetivo al final
     """
-    data = pd.read_csv(file, sep='\t')
-    #print(data)
+    data = pd.read_csv(file, sep=None, engine='python') #Interpreta él solo cuál el separador de columnas en el CSV
+    #data = pd.read_csv(file, sep="\t") Si el de arriba no funciona introducimos manualmente el separador
+    print(data)
 
     # Comprobamos que la columna realmente existe en el CSV
     if columna_target not in data.columns:
@@ -48,7 +49,6 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     """
     Aplica el preprocesado evitando la fuga de datos (Data Leakage).
     Aprende reglas en train, las aplica ciegamente en dev.
-    Es necesario tener dividido en 2 funciones distintas el preprocesado porque los datos se nos darán como train/dev en un CSV y test en otro CSV.
     Esta función devuelve los 2 datasets de train y dev preprocesado y las herramientas usadas en fit_transform para almacenarlas con Pickle.
     De esta forma podemos ejecutar el preprocesado sobre un dataset de test en otra función.
     - Si herramientas_guardadas es None (MODO TRAIN): Aprende las reglas y devuelve los datasets preprocesados y las herramientas.
@@ -222,7 +222,16 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             print(f" -> Aplicando escalado tipo: {metodo_escalado}")
 
             # 2. Identificamos qué columnas escalar (todas menos la columna objetivo)
-            columnas_a_escalar = data_train.columns.drop(columna_y).tolist()
+            columnas_indicadas = opciones.get("features_scale", []) # Leemos la lista de columnas a escalar del JSON
+
+            if len(columnas_indicadas) > 0:
+                # Comprobamos que existan en el DataFrame (por seguridad)
+                columnas_a_escalar = [col for col in columnas_indicadas if col in data_train.columns]
+                print(f"    [i] Escalando SOLO las columnas indicadas en JSON: {columnas_a_escalar}")
+            else:
+                # Comportamiento: Si el JSON no dice nada, escalamos todas menos la 'y'
+                columnas_a_escalar = data_train.columns.drop(columna_y).tolist()
+                print("    [i] No se especificaron 'features_scale'. Escalando todas las columnas menos la que hay que predecir.")
 
             # 3. Aplicamos la transformación
             # ¡ATENCIÓN! Train da las medias/máximos, Dev solo se ajusta a ellos
@@ -245,7 +254,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     metodo_balanceo = opciones.get("sampling")
     ratio_balanceo = opciones.get("balance", "auto") #Si no hay nada por defecto es auto, que es 50-50
 
-    if is_train and metodo_balanceo is not None:
+    if is_train and metodo_balanceo in ["undersampling", "oversampling"]:
         print(f" -> Aplicando balanceo de clases tipo: {metodo_balanceo}")
 
         # SMOTE necesita las predicciones (X) y la clase objetivo (Y) separadas
