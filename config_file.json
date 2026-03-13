@@ -18,7 +18,7 @@
     "criterion":  ["gini", "entropy"]
   },
   "hyperparametersRandomForest": {
-    "n_estimators": 100
+    "n_estimators": 50
   },
   "hyperparametersNaiveBayes": {
 
@@ -26,10 +26,10 @@
   "preprocessing": {
     "separator": ",",
     "drop_features": [],
-    "categorical_features_convert": ["island", "sex"],
+    "categorical_features_convert": ["message"],
     "missing_values": "impute",
     "impute_strategy": "mean",
-    "scaling": "standard",
+    "scaling": "none",
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
     "text_preprocess": "one-hot",
     "balance": 0.4,

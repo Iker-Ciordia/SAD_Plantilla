@@ -23,8 +23,8 @@ def load_data(file, columna_target):
     :param target_column: Nombre de la columna que contiene las clases a predecir
     :return: Datos del fichero con la columna objetivo al final
     """
-    data = pd.read_csv(file, sep=None, engine='python') #Interpreta él solo cuál el separador de columnas en el CSV
-    #data = pd.read_csv(file, sep="\t") Si el de arriba no funciona introducimos manualmente el separador
+    #data = pd.read_csv(file, sep=None, engine='python') #Interpreta él solo cuál el separador de columnas en el CSV
+    data = pd.read_csv(file, sep="\t") #Si el de arriba no funciona introducimos manualmente el separador
     print(data)
 
     # Comprobamos que la columna realmente existe en el CSV
@@ -544,7 +544,7 @@ if __name__ == "__main__":
     data = load_data(fichero, columna_objetivo)
 
     # B. División del conjunto de train con el de dev. Evitamos Data Leakage para CUALQUIER algoritmo
-    data_train, data_dev = train_test_split(data, test_size=0.20, random_state=42)
+    data_train, data_dev = train_test_split(data, test_size=0.20, random_state=42, stratify=data[columna_objetivo])
 
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
