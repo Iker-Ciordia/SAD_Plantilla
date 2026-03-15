@@ -18,9 +18,12 @@
     "criterion": ["gini", "entropy"] //Se evalúa tanto con gini y entropy. El usuario no debería tocar esto porque el programa decide cuál es el mejor modelo.
   },
   "hyperparametersRandomForest": {
-    "n_estimators": 10, //Cantidad de árboles a generar
+    "n_estimators": 10 //Cantidad de árboles a generar
   },
   "hyperparametersNaiveBayes": {
+  "min_alpha": 0.01, // Suavizado de Laplace
+  "max_alpha": 1, // Suavizado de Laplace
+  "step_alpha": 0.01 // longitud de los saltos de min a max
 
   },
   "preprocessing": {

@@ -1,6 +1,6 @@
 {
   "dataset_language": "english",
-  "algorithm": "RandomForest",
+  "algorithm": "NaiveBayes",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -21,7 +21,9 @@
     "n_estimators": 50
   },
   "hyperparametersNaiveBayes": {
-
+    "min_alpha": 0.01,
+    "max_alpha": 1,
+    "step_alpha": 0.01
   },
   "preprocessing": {
     "separator": ",",

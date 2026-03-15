@@ -8,6 +8,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 
 nltk.download('stopwords', quiet=True)
@@ -482,6 +483,25 @@ def randomForest(data_train, data_dev, n_estimators, max_depth, min_samples_spli
 
     return y_dev, y_pred, modelo_forest
 
+def naiveBayes(data_train, data_dev, alpha):
+    # Separar atributos y clase
+    X_train = data_train.iloc[:, :-1].values
+    y_train = data_train.iloc[:, -1].values
+    X_dev = data_dev.iloc[:, :-1].values
+    y_dev = data_dev.iloc[:, -1].values
+
+    # 2. Instanciar el modelo con el hiperparámetro alpha
+    # MultinomialNB es la versión de Naïve Bayes diseñada para contar frecuencias de palabras
+    modelo_naive_bayes = MultinomialNB(alpha=alpha)
+
+    # 3. Entrenar el modelo
+    modelo_naive_bayes.fit(X_train, y_train)
+
+    # 4. Realizar las predicciones sobre el conjunto de desarrollo (dev)
+    y_pred = modelo_naive_bayes.predict(X_dev)
+
+    return y_dev, y_pred, modelo_naive_bayes
+
 def guardar_resultados_csv(combinacion_Params, y_dev, y_pred):
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
@@ -766,10 +786,66 @@ if __name__ == "__main__":
         pickle.dump(paquete_final, archivo)
         archivo.close()
 
-    elif algoritmo == "NaiveBayes":
+    elif algoritmo == "NaiveBayes": #TODO probar que funciona el algoritmo de NaiveBayes
         print("\n[->] Ejecutando modelo: Naive Bayes")
-        # TODO: Leer hyperparametersNaiveBayes del JSON
-        pass
+        # Leemos los rangos del JSON (con valores por defecto por si acaso)
+        hiper_NaiveBayes = config.get("hyperparametersNaiveBayes", {})
+        min_alpha = hiper_NaiveBayes.get("min_alpha", 0.01)
+        max_alpha = hiper_NaiveBayes.get("max_alpha", 1)
+        step = hiper_NaiveBayes.get("step_alpha", 0.01)
+
+        # Borramos el CSV antiguo si existe para empezar limpios
+        import os
+
+        if os.path.exists('resultados.csv'):
+            os.remove('resultados.csv')
+
+        # Usamos arange para definir el salto exacto (step)
+        # Sumamos un pequeño margen para incluir el max_alpha
+        lista_alphas = np.arange(min_alpha, max_alpha + (step / 2), step)
+
+        mejor_f1 = -1.0
+        mejor_modelo = None
+        mejores_hiperparametros = ""
+        # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
+        for alpha in lista_alphas:
+            alpha = round(float(alpha), 4)
+            print(f"\n--------------------------------------------------")
+            print(
+                f"--> Evaluando combinación: alpha:{alpha}")
+
+            # Llamamos a la función con los parámetros de esta iteración
+            y_dev, y_pred, modelo_entrenado = naiveBayes(data_train, data_dev, alpha = alpha)
+
+            # Mostramos y guardamos resultados de ESTA combinación
+            print(calculate_confusion_matrix(y_dev, y_pred))
+
+            # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
+            f1_actual = calculate_metrics(y_dev, y_pred)
+
+            if f1_actual > mejor_f1:
+                mejor_f1 = f1_actual
+                mejor_modelo = modelo_entrenado
+                mejores_hiperparametros = f"alpha:{alpha}"
+                print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+
+            combinacion_Params = f"alpha:{alpha}"
+            guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
+        print(f"\n==================================================")
+        print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
+
+        import pickle
+
+        # Creamos un diccionario (el paquete final) con el modelo a usar para test y las herramientas de preprocesado utilizadas con train y dev
+        paquete_final = {
+            'modelo': mejor_modelo,
+            'herramientas_preproceso': mis_herramientas
+        }
+        nombre_archivo = 'mejor_modelo_naive_bayes.pkl'
+
+        archivo = open(nombre_archivo, 'wb')
+        pickle.dump(paquete_final, archivo)
+        archivo.close()
     else:
         print(f"Error: Algoritmo '{algoritmo}' no reconocido en el JSON.")
         sys.exit(1)
