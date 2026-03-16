@@ -28,7 +28,9 @@
   "preprocessing": {
     "separator": ",",
     "drop_features": [],
-    "categorical_features_convert": ["message"],
+    "continuous_features_discretize": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+    "discretize_bins": 7,
+    "categorical_features_convert": ["island", "sex"],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "none",

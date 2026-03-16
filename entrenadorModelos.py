@@ -25,13 +25,13 @@ def load_data(file, columna_target):
     :return: Datos del fichero con la columna objetivo al final
     """
     #data = pd.read_csv(file, sep=None, engine='python') #Interpreta él solo cuál el separador de columnas en el CSV
-    data = pd.read_csv(file, sep="\t") #Si el de arriba no funciona introducimos manualmente el separador
+    data = pd.read_csv(file, sep=",") #Si el de arriba no funciona introducimos manualmente el separador
     print(data)
 
     # Comprobamos que la columna realmente existe en el CSV
     if columna_target not in data.columns:
         import sys
-        print(f"Error: La columna '{columna_target}' no se ha encontrado en el archivo.")
+        print(f"Error: La columna '{columna_target}' no se ha encontrado en el archivo. Comprueba el separador.")
         sys.exit(1)
 
     # Extraemos la lista de columnas, quitamos la objetivo y la ponemos al final para que el algoritmo nunca se confunda
@@ -136,6 +136,54 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 imputer = herramientas['imputer']
                 cols = [c for c in herramientas['imputer_cols'] if c in data_train.columns]
                 data_train[cols] = imputer.transform(data_train[cols]) #Aunque la variable se llama "data_train" realmente sería la de test.
+
+    #######################################################
+    #        Discretización de variables continuas        # TODO Probar que realmente funciona bien
+    #######################################################
+    columnas_a_discretizar = opciones.get("continuous_features_discretize", [])
+    cant_rangos = opciones.get("discretize_bins", 5)
+
+    # Comprobamos que existan en el DataFrame
+    cols_discretize = [col for col in columnas_a_discretizar if col in data_train.columns]
+
+    #Si existe alguna columna a discretizar
+    if len(cols_discretize) > 0:
+        from sklearn.preprocessing import KBinsDiscretizer
+
+        if is_train: #Si estamos entrenando el modelo y no testeandolo
+            print(f" -> Discretizando variables continuas: {cols_discretize}")
+            # encode='onehot-dense' devuelve 0s y 1s normales. n_bins divide en tantos grupos como los metidos en el JSON.
+            discretizador = KBinsDiscretizer(n_bins=cant_rangos, encode='onehot-dense', strategy='uniform') #Le decimos que para cada intervalo cree una columna y ponga un 1
+                                                                                                            #si pertenece y un 0 si no. Hace el paso de One-Hot automáticamente
+
+            # Ajustamos y transformamos en TRAIN
+            matriz_train_disc = discretizador.fit_transform(data_train[cols_discretize])
+            if data_dev is not None:
+                matriz_dev_disc = discretizador.transform(data_dev[cols_discretize])
+
+            herramientas['discretizer'] = discretizador
+        else:
+            # En TEST, solo transformamos usando la herramienta guardada
+            discretizador = herramientas['discretizer']
+            matriz_train_disc = discretizador.transform(data_train[cols_discretize])
+
+        # --- Generar los nuevos nombres de las columnas (ej: bill_length_mm_bin_0) ---
+        nombres_nuevos = []
+        for i, col in enumerate(cols_discretize):
+            n_bins_reales = discretizador.n_bins_[i]
+            for b in range(n_bins_reales):
+                nombres_nuevos.append(f"{col}_bin_{b}")
+
+        # --- Reemplazar las columnas originales por las nuevas cajas discretizadas ---
+        df_train_disc = pd.DataFrame(matriz_train_disc, columns=nombres_nuevos, index=data_train.index)
+        data_train = data_train.drop(columns=cols_discretize).join(df_train_disc)
+
+        if data_dev is not None:
+            df_dev_disc = pd.DataFrame(matriz_dev_disc, columns=nombres_nuevos, index=data_dev.index)
+            data_dev = data_dev.drop(columns=cols_discretize).join(df_dev_disc)
+
+
+
 
     ########################################################################
     #  Preprocesamiento de texto (TF-IDF, BoW/frecuency o Binario/one-hot) # TODO Preguntar si hay que usar One-Hot para el cat2num en KNN y Label-Encoding en Decision Tree o no hace falta diferenciarlos
