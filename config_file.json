@@ -1,7 +1,7 @@
 {
   "dataset_language": "english",
   "algorithm": "NaiveBayes",
-  "metric_to_evaluate": "macro",
+  "metric_to_evaluate": "micro",
   "hyperparametersKNN": {
     "p_min": 1,
     "p_max": 2,
@@ -35,7 +35,7 @@
     "impute_strategy": "mean",
     "scaling": "none",
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
-    "text_preprocess": "one-hot",
+    "text_preprocess": "frequency",
     "balance": 0.4,
     "sampling": "None"
   }

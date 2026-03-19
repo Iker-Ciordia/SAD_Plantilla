@@ -36,7 +36,7 @@
     "impute_strategy": "mean", //median, mean, most_frequent
     "scaling": "max-min", //max-min, max, standard/z-score (Cualquier otra cosa si no se quiere escalar) En Naive Bayes y DecisionTree/RandomForest NO hay que escalar.
     "features_scale": [], //Se meten los nombres de las columnas que se quieran escalar. Si se deja vacío pero hay un escalador puesto, se escalan todas las columnas. Si no hay escalador, ninguna se escala.
-    "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM)
+    "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM). Poner cualquier otra cosa si no se quiere adaptar
     "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria.
     "sampling": "undersampling" //undersampling, oversampling (Cualquier otra cosa si no se quiere hacer balanceo)
   }

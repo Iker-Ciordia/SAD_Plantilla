@@ -1,6 +1,6 @@
 import pickle
 import sys
-
+import json
 import pandas as pd
 import entrenadorModelos as entrenadorModelos
 # Asumo que tienes importada tu función load_data y apply_preprocessing
@@ -27,7 +27,9 @@ mis_herramientas = paquete_cargado['herramientas_preproceso']
 
 # 2. Cargar el test secreto
 # (Usar load_data para asegurar que la columna objetivo va al final)
-data_test = entrenadorModelos.load_data(fichero, columna_objetivo)
+file = open(config, 'r')
+config_json = json.load(file)
+data_test = entrenadorModelos.load_data(fichero, columna_objetivo, config_json)
 
 # 3. Preprocesamos los datos de testing
 data_test_limpio = entrenadorModelos.apply_preprocessing(config, data_test, None, mis_herramientas)
@@ -50,3 +52,6 @@ print(df_resultados.to_string()) # to_string() fuerza a imprimir todas las filas
 
 #Obtener matriz de confusión
 print(entrenadorModelos.calculate_confusion_matrix(predicciones, y_test_real))
+
+#Obtener métricas
+entrenadorModelos.calculate_metrics(y_test_real, predicciones, config)

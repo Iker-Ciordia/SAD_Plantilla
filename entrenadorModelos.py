@@ -17,15 +17,18 @@ nltk.download('punkt_tab', quiet=True)
 nltk.download('wordnet', quiet=True)
 
 
-def load_data(file, columna_target):
+def load_data(file, columna_target, config):
     """
     Función para cargar los datos de un fichero csv y mover la clase al final
     :param file: Fichero csv
-    :param target_column: Nombre de la columna que contiene las clases a predecir
+    :param columna_target: Nombre de la columna que contiene las clases a predecir
+    :param config: Fichero JSON usado para obtener el separador de columnas en el CSV.
     :return: Datos del fichero con la columna objetivo al final
     """
+
+    separador = config.get("preprocessing").get("separator", ",")
     #data = pd.read_csv(file, sep=None, engine='python') #Interpreta él solo cuál el separador de columnas en el CSV
-    data = pd.read_csv(file, sep=",") #Si el de arriba no funciona introducimos manualmente el separador
+    data = pd.read_csv(file, sep=separador) #Si el de arriba no funciona introducimos manualmente el separador
     print(data)
 
     # Comprobamos que la columna realmente existe en el CSV
@@ -388,16 +391,18 @@ def limpiar_texto(texto, idioma='english'):
     return resultado if resultado != "" else "desconocido"
 
 
-def calculate_metrics(y_dev, y_pred):
+def calculate_metrics(y_dev, y_pred, config_file):
     """
     Función para calcular el F-score
     :param y_dev: Valores reales
     :param y_pred: Valores predichos
+    :param config_file: String con la ruta al fichero JSON de configuración
     :return: F-score (micro), F-score (macro)
     """
     from sklearn.metrics import f1_score        #Importamos todas las librerias de métricas
     from sklearn.metrics import recall_score
     from sklearn.metrics import precision_score
+    import json
 
     # Leer el archivo JSON
     file = open(config_file, 'r')
@@ -539,7 +544,9 @@ def naiveBayes(data_train, data_dev, alpha):
     y_dev = data_dev.iloc[:, -1].values
 
     # 2. Instanciar el modelo con el hiperparámetro alpha
-    # MultinomialNB es la versión de Naïve Bayes diseñada para contar frecuencias de palabras
+    # MultinomialNB es la versión de Naïve Bayes diseñada para contar frecuencias de palabras. Es decir, para columnas no continuas
+    # La idea es que para no complicar mucho el asunto en el preprocesado, si existe alguna columna que sea continua y se quiera usar Naive Bayes
+    # en vez de cambiar a GaussianNB o usar una mezcla, discretizamos esas columnas, aunque exista un mínimo de pérdida de información
     modelo_naive_bayes = MultinomialNB(alpha=alpha)
 
     # 3. Entrenar el modelo
@@ -609,7 +616,7 @@ if __name__ == "__main__":
     # --- INICIO DEL FLUJO DE MACHINE LEARNING COMÚN ---
 
     # A. Cargamos los datos
-    data = load_data(fichero, columna_objetivo)
+    data = load_data(fichero, columna_objetivo, config)
 
     # B. División del conjunto de train con el de dev. Evitamos Data Leakage para CUALQUIER algoritmo
     data_train, data_dev = train_test_split(data, test_size=0.20, random_state=42, stratify=data[columna_objetivo])
@@ -674,7 +681,7 @@ if __name__ == "__main__":
                     # Mostramos y guardamos resultados de ESTA combinación
                     print(calculate_confusion_matrix(y_dev, y_pred))
                     # Calculas las métricas. Hacemos que devuelva el F1 para poder usarlo como decisor del mejor modelo.
-                    f1_actual = calculate_metrics(y_dev, y_pred)
+                    f1_actual = calculate_metrics(y_dev, y_pred, config_file)
 
                     if f1_actual > mejor_f1:
                         mejor_f1 = f1_actual
@@ -739,7 +746,7 @@ if __name__ == "__main__":
                 print(calculate_confusion_matrix(y_dev, y_pred))
 
                 # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
-                f1_actual = calculate_metrics(y_dev, y_pred)
+                f1_actual = calculate_metrics(y_dev, y_pred, config_file)
 
                 if f1_actual > mejor_f1:
                     mejor_f1 = f1_actual
@@ -808,7 +815,7 @@ if __name__ == "__main__":
                 print(calculate_confusion_matrix(y_dev, y_pred))
 
                 # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
-                f1_actual = calculate_metrics(y_dev, y_pred)
+                f1_actual = calculate_metrics(y_dev, y_pred, config_file)
 
                 if f1_actual > mejor_f1:
                     mejor_f1 = f1_actual
@@ -869,7 +876,7 @@ if __name__ == "__main__":
             print(calculate_confusion_matrix(y_dev, y_pred))
 
             # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
-            f1_actual = calculate_metrics(y_dev, y_pred)
+            f1_actual = calculate_metrics(y_dev, y_pred, config_file)
 
             if f1_actual > mejor_f1:
                 mejor_f1 = f1_actual
