@@ -21,21 +21,22 @@
     "n_estimators": 50
   },
   "hyperparametersNaiveBayes": {
+    "type": "gaussian",
     "min_alpha": 0.01,
     "max_alpha": 1,
     "step_alpha": 0.01
   },
   "preprocessing": {
-    "separator": ",",
+    "separator": "\t",
     "drop_features": [],
-    "continuous_features_discretize": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+    "continuous_features_discretize": [],
     "discretize_bins": 7,
-    "categorical_features_convert": ["island", "sex"],
+    "categorical_features_convert": ["message"],
     "missing_values": "impute",
     "impute_strategy": "mean",
     "scaling": "none",
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
-    "text_preprocess": "frequency",
+    "text_preprocess": "tf-idf",
     "balance": 0.4,
     "sampling": "None"
   }

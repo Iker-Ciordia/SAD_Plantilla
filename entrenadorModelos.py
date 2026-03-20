@@ -8,7 +8,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import CategoricalNB
 from sklearn.tree import DecisionTreeClassifier
 
 nltk.download('stopwords', quiet=True)
@@ -156,8 +156,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         if is_train: #Si estamos entrenando el modelo y no testeandolo
             print(f" -> Discretizando variables continuas: {cols_discretize}")
             # encode='onehot-dense' devuelve 0s y 1s normales. n_bins divide en tantos grupos como los metidos en el JSON.
-            discretizador = KBinsDiscretizer(n_bins=cant_rangos, encode='onehot-dense', strategy='uniform') #Le decimos que para cada intervalo cree una columna y ponga un 1
-                                                                                                            #si pertenece y un 0 si no. Hace el paso de One-Hot automáticamente
+            discretizador = KBinsDiscretizer(n_bins=cant_rangos, encode='ordinal', strategy='uniform') #Le decimos que para cada intervalo le asocie un número y ya
+                                                                                                       #no es necesario que cada intervalo sea una columna porque el
+                                                                                                       #CategoricalNB de Naive Bayes entiende que no hay relación entre un 0-1 o 0-2
 
             # Ajustamos y transformamos en TRAIN
             matriz_train_disc = discretizador.fit_transform(data_train[cols_discretize])
@@ -170,14 +171,13 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             discretizador = herramientas['discretizer']
             matriz_train_disc = discretizador.transform(data_train[cols_discretize])
 
-        # --- Generar los nuevos nombres de las columnas (ej: bill_length_mm_bin_0) ---
+        # --- Generar los nuevos nombres de las columnas ---
+        # Como es ordinal (categorias dentro de la propia columna, no una columna por categoria), devuelve exactamente 1 columna por cada original
         nombres_nuevos = []
-        for i, col in enumerate(cols_discretize):
-            n_bins_reales = discretizador.n_bins_[i]
-            for b in range(n_bins_reales):
-                nombres_nuevos.append(f"{col}_bin_{b}")
+        for col in cols_discretize:
+            nombres_nuevos.append(f"{col}_disc")
 
-        # --- Reemplazar las columnas originales por las nuevas cajas discretizadas ---
+        # --- Reemplazar las columnas originales por las discretizadas ---
         df_train_disc = pd.DataFrame(matriz_train_disc, columns=nombres_nuevos, index=data_train.index)
         data_train = data_train.drop(columns=cols_discretize).join(df_train_disc)
 
@@ -536,7 +536,7 @@ def randomForest(data_train, data_dev, n_estimators, max_depth, min_samples_spli
 
     return y_dev, y_pred, modelo_forest
 
-def naiveBayes(data_train, data_dev, alpha):
+def naiveBayes(data_train, data_dev, alpha, tipo="multinomial"):
     # Separar atributos y clase
     X_train = data_train.iloc[:, :-1].values
     y_train = data_train.iloc[:, -1].values
@@ -544,10 +544,18 @@ def naiveBayes(data_train, data_dev, alpha):
     y_dev = data_dev.iloc[:, -1].values
 
     # 2. Instanciar el modelo con el hiperparámetro alpha
-    # MultinomialNB es la versión de Naïve Bayes diseñada para contar frecuencias de palabras. Es decir, para columnas no continuas
-    # La idea es que para no complicar mucho el asunto en el preprocesado, si existe alguna columna que sea continua y se quiera usar Naive Bayes
-    # en vez de cambiar a GaussianNB o usar una mezcla, discretizamos esas columnas, aunque exista un mínimo de pérdida de información
-    modelo_naive_bayes = MultinomialNB(alpha=alpha)
+    # CategoricalNB es la versión de Naïve Bayes diseñada para contar frecuencias de palabras. Es decir, para columnas no continuas
+    # La idea es que si todas las columnas son categóricas (hay que pasarlas a números con frequency) o convertimos a categóricas las continuas, se use CategoricalNB.
+    # Si la mayoría de columnas son continuas, aunque haya categóricas (aquí también hay que pasarlas a números con frequency) usamos GaussianNB.
+    # Esto se indica con un parámetro en el JSON, porque el usuario tiene que analizar previamente el dataset.
+    # AVISO: CON EL CATEGORICALNB NUNCA USAR TF-IDF PORQUE ENTENDERÍA CADA NÚMERO DECIMAL COMO UNA CATEGORÍA Y SE LIA GORDA.
+
+    if tipo == "categorical":
+        from sklearn.naive_bayes import CategoricalNB
+        modelo_naive_bayes = CategoricalNB(alpha=alpha)
+    else:
+        from sklearn.naive_bayes import GaussianNB
+        modelo_naive_bayes = GaussianNB()
 
     # 3. Entrenar el modelo
     modelo_naive_bayes.fit(X_train, y_train)
@@ -848,6 +856,7 @@ if __name__ == "__main__":
         min_alpha = hiper_NaiveBayes.get("min_alpha", 0.01)
         max_alpha = hiper_NaiveBayes.get("max_alpha", 1)
         step = hiper_NaiveBayes.get("step_alpha", 0.01)
+        tipo_nb = hiper_NaiveBayes.get("type", "multinomial")
 
         # Borramos el CSV antiguo si existe para empezar limpios
         import os
@@ -870,7 +879,7 @@ if __name__ == "__main__":
                 f"--> Evaluando combinación: alpha:{alpha}")
 
             # Llamamos a la función con los parámetros de esta iteración
-            y_dev, y_pred, modelo_entrenado = naiveBayes(data_train, data_dev, alpha = alpha)
+            y_dev, y_pred, modelo_entrenado = naiveBayes(data_train, data_dev, alpha = alpha, tipo=tipo_nb)
 
             # Mostramos y guardamos resultados de ESTA combinación
             print(calculate_confusion_matrix(y_dev, y_pred))
