@@ -1,6 +1,6 @@
 {
   "dataset_language": "english",
-  "algorithm": "NaiveBayes",
+  "algorithm": "KNN",
   "metric_to_evaluate": "micro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -27,17 +27,17 @@
     "step_alpha": 0.01
   },
   "preprocessing": {
-    "separator": "\t",
+    "separator": ",",
     "drop_features": [],
     "continuous_features_discretize": [],
-    "discretize_bins": 7,
-    "categorical_features_convert": ["message"],
+    "discretize_bins": 10,
+    "categorical_features_convert": ["gender", "work_type", "Residence_type", "smoking_status", "ever_married"],
     "missing_values": "impute",
-    "impute_strategy": "mean",
-    "scaling": "none",
-    "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
-    "text_preprocess": "tf-idf",
-    "balance": 0.4,
-    "sampling": "None"
+    "impute_strategy": "most_frequent",
+    "scaling": "standard",
+    "features_scale": ["age", "avg_glucose_level", "bmi"],
+    "text_preprocess": "one-hot",
+    "balance": 0.5,
+    "sampling": "none"
   }
 }

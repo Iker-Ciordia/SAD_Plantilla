@@ -536,7 +536,7 @@ def randomForest(data_train, data_dev, n_estimators, max_depth, min_samples_spli
 
     return y_dev, y_pred, modelo_forest
 
-def naiveBayes(data_train, data_dev, alpha, tipo="multinomial"):
+def naiveBayes(data_train, data_dev, alpha=None, tipo="multinomial"):
     # Separar atributos y clase
     X_train = data_train.iloc[:, :-1].values
     y_train = data_train.iloc[:, -1].values
@@ -601,7 +601,7 @@ if __name__ == "__main__":
 
     # Pedimos fichero, objetivo y obligatoriamente el JSON
     if len(sys.argv) < 4 or "-c" not in sys.argv:
-        print("Uso: python script.py <fichero> <columna_objetivo> -c <config.json>")
+        print("Uso: python script.py <fichero> <columna_objetivo> -c <config_file.json>")
         sys.exit(1)
 
     # Asignamos las variables desde la consola para que sea más fácil de leer
@@ -907,6 +907,7 @@ if __name__ == "__main__":
 
             mejor_f1 = f1_actual
             mejor_modelo = modelo_entrenado
+            mejores_hiperparametros = "Gaussian (Sin hiperparámetros)"
             print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
 
             combinacion_Params = f"No tiene alpha: {tipo_nb}"
