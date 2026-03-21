@@ -864,36 +864,52 @@ if __name__ == "__main__":
         if os.path.exists('resultados.csv'):
             os.remove('resultados.csv')
 
-        # Usamos arange para definir el salto exacto (step)
-        # Sumamos un pequeño margen para incluir el max_alpha
-        lista_alphas = np.arange(min_alpha, max_alpha + (step / 2), step)
-
         mejor_f1 = -1.0
         mejor_modelo = None
         mejores_hiperparametros = ""
-        # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
-        for alpha in lista_alphas:
-            alpha = round(float(alpha), 4)
-            print(f"\n--------------------------------------------------")
-            print(
-                f"--> Evaluando combinación: alpha:{alpha}")
+        if tipo_nb == "categorical":
+            # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
+            # Usamos arange para definir el salto exacto (step)
+            # Sumamos un pequeño margen para incluir el max_alpha
+            lista_alphas = np.arange(min_alpha, max_alpha + (step / 2), step)
+            for alpha in lista_alphas:
+                alpha = round(float(alpha), 4)
+                print(f"\n--------------------------------------------------")
+                print(
+                    f"--> Evaluando combinación: alpha:{alpha}")
 
-            # Llamamos a la función con los parámetros de esta iteración
-            y_dev, y_pred, modelo_entrenado = naiveBayes(data_train, data_dev, alpha = alpha, tipo=tipo_nb)
+                # Llamamos a la función con los parámetros de esta iteración
+                y_dev, y_pred, modelo_entrenado = naiveBayes(data_train=data_train, data_dev=data_dev, alpha = alpha, tipo=tipo_nb)
 
-            # Mostramos y guardamos resultados de ESTA combinación
+                # Mostramos y guardamos resultados de ESTA combinación
+                print(calculate_confusion_matrix(y_dev, y_pred))
+
+                # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
+                f1_actual = calculate_metrics(y_dev, y_pred, config_file)
+
+                if f1_actual > mejor_f1:
+                    mejor_f1 = f1_actual
+                    mejor_modelo = modelo_entrenado
+                    mejores_hiperparametros = f"alpha:{alpha}"
+                    print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+
+                combinacion_Params = f"alpha:{alpha}"
+                guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
+        else:
+            # Llamamos a la función con los parámetros
+            y_dev, y_pred, modelo_entrenado = naiveBayes(data_train=data_train, data_dev=data_dev, tipo=tipo_nb)
+
+            # Mostramos y guardamos resultados
             print(calculate_confusion_matrix(y_dev, y_pred))
 
             # Calculas las métricas. Devuelve el F1 para poder usarlo como decisor.
             f1_actual = calculate_metrics(y_dev, y_pred, config_file)
 
-            if f1_actual > mejor_f1:
-                mejor_f1 = f1_actual
-                mejor_modelo = modelo_entrenado
-                mejores_hiperparametros = f"alpha:{alpha}"
-                print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+            mejor_f1 = f1_actual
+            mejor_modelo = modelo_entrenado
+            print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
 
-            combinacion_Params = f"alpha:{alpha}"
+            combinacion_Params = f"No tiene alpha: {tipo_nb}"
             guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
         print(f"\n==================================================")
         print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
