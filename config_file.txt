@@ -21,7 +21,9 @@
     "n_estimators": 10 //Cantidad de árboles a generar
   },
   "hyperparametersNaiveBayes": {
-  "tipo": "categorical" //categorical, gaussian. Indica el tipo de motor de Naive Bayes a utilizar. Usaremos "categorical" si discretizamos columnas continuas o no existen columnas continuas y todas son categoricas. Usaremos "gaussian" si hay muchas columnas continuas.
+  "tipo": "categorical" //categorical, gaussian, multinomial. Indica el tipo de motor de Naive Bayes a utilizar. Usaremos "categorical" si discretizamos columnas continuas o no existen columnas continuas y todas son categoricas.
+                        //Usaremos "gaussian" si hay muchas columnas continuas.
+                        //Usaremos "multinomial" si queremos contar cantidades. Un muy buen ejemplo es el de búsqueda de Spam-Ham en mensajes.
   "min_alpha": 0.01, //Suavizado de Laplace
   "max_alpha": 1, //Suavizado de Laplace
   "step_alpha": 0.01 //longitud de los saltos de min a max

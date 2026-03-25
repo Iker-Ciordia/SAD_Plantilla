@@ -51,7 +51,9 @@ print("\n--- RESULTADOS DE LAS PREDICCIONES ---")
 print(df_resultados.to_string()) # to_string() fuerza a imprimir todas las filas sin cortarlas
 
 #Obtener matriz de confusión
+print("\n--- MATRIZ DE CONFUSIÓN ---")
 print(entrenadorModelos.calculate_confusion_matrix(predicciones, y_test_real))
 
 #Obtener métricas
+print("\n--- MÉTRICAS ---")
 entrenadorModelos.calculate_metrics(y_test_real, predicciones, config)

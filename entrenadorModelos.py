@@ -553,6 +553,9 @@ def naiveBayes(data_train, data_dev, alpha=None, tipo="multinomial"):
     if tipo == "categorical":
         from sklearn.naive_bayes import CategoricalNB
         modelo_naive_bayes = CategoricalNB(alpha=alpha)
+    elif tipo == "multinomial":
+        from sklearn.naive_bayes import MultinomialNB
+        modelo_naive_bayes = MultinomialNB(alpha=alpha)
     else:
         from sklearn.naive_bayes import GaussianNB
         modelo_naive_bayes = GaussianNB()
@@ -582,7 +585,7 @@ def guardar_resultados_csv(combinacion_Params, y_dev, y_pred):
     rec = recall_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
     f1 = f1_score(y_dev, y_pred, average=tipo_metrica, zero_division=0)
 
-    archivo_csv = 'resultados.csv'
+    archivo_csv = 'resultados_train.csv'
 
     # Si el archivo no existe, creamos la cabecera primero
     cabecera = not os.path.exists(archivo_csv)
@@ -867,7 +870,7 @@ if __name__ == "__main__":
         mejor_f1 = -1.0
         mejor_modelo = None
         mejores_hiperparametros = ""
-        if tipo_nb == "categorical":
+        if tipo_nb in ["categorical", "multinomial"]:
             # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
             # Usamos arange para definir el salto exacto (step)
             # Sumamos un pequeño margen para incluir el max_alpha

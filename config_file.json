@@ -21,7 +21,7 @@
     "n_estimators": 50
   },
   "hyperparametersNaiveBayes": {
-    "type": "gaussian",
+    "type": "multinomial",
     "min_alpha": 0.01,
     "max_alpha": 1,
     "step_alpha": 0.01
@@ -31,11 +31,11 @@
     "drop_features": [],
     "continuous_features_discretize": [],
     "discretize_bins": 10,
-    "categorical_features_convert": ["gender", "work_type", "Residence_type", "smoking_status", "ever_married"],
+    "categorical_features_convert": ["island", "sex"],
     "missing_values": "impute",
-    "impute_strategy": "most_frequent",
+    "impute_strategy": "mean",
     "scaling": "standard",
-    "features_scale": ["age", "avg_glucose_level", "bmi"],
+    "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
     "text_preprocess": "one-hot",
     "balance": 0.5,
     "sampling": "none"
