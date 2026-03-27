@@ -9,7 +9,7 @@ El objetivo principal de este proyecto ha sido la implementación de 4 modelos d
 Aquí se explica de forma concisa cómo utilizar el programa. Hemos intentado explicar los aspecto más importantes de la forma más sencilla para que una persona sin muchos conocimientos técnicos en programación lo entienda.
 
 ## Requisitos
-- Tener un entorno virtual de Python 3.13 o superior.
+- Tener un entorno virtual de Python 3.12
 - Tener instalados en el entorno virtual los paquetes indicados en el fichero *requirements.txt*
 
 ## Ejecución del programa
@@ -22,7 +22,7 @@ python entrenadorModelos.py fichero_train.csv "columna_objetivo" -c config_file.
 ```
 o si no te funciona el anterior:
 ```bash
-py entrenadorModelos.py fichero.csv "columna_objetivo" -c config_file.json
+py entrenadorModelos.py fichero_train.csv "columna_objetivo" -c config_file.json
 ```
 *El parámetro "fichero_train.csv" será el fichero CSV que tenga tus datos de train. El parámetro "columna_objetivo" será el nombre de la columna a predecir en el fichero CSV.*
 5. Una vez se ha creado el modelo (fichero terminado en la extensión .pkl) para la evaluación de los datos de test (otro fichero CSV estructurado igual que el de train) se tiene que ejecutar el siguiente comando.
