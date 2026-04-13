@@ -24,12 +24,15 @@
   "tipo": "categorical" //categorical, gaussian, multinomial. Indica el tipo de motor de Naive Bayes a utilizar. Usaremos "categorical" si discretizamos columnas continuas o no existen columnas continuas y todas son categoricas.
                         //Usaremos "gaussian" si hay muchas columnas continuas.
                         //Usaremos "multinomial" si queremos contar cantidades. Un muy buen ejemplo es el de búsqueda de Spam-Ham en mensajes.
+                        //Usaremos "complement" si procesamos texto (frecuencias o TF-IDF) pero tenemos clases muy DESBALANCEADAS (ej. 700 positivos y 50 neutros), sin necesidad de inventar datos con SMOTE.
   "min_alpha": 0.01, //Suavizado de Laplace
   "max_alpha": 1, //Suavizado de Laplace
   "step_alpha": 0.01 //longitud de los saltos de min a max
 
   },
   "preprocessing": {
+    "analisis_sentimientos": true //Si es True quiere decir que estamos ante una tarea de análisis de sentimientos
+    "agrupar_sentimiento_proyecto": true //Si es True quiere decir que las columnas de sentimientos son numéricas y no textuales
     "separator": "," //Separador de los datos en el CSV. Actualmente "," porque es lo que más se usa, pero en el de SPAM/HAM se usas "\t" porque está separado por un tabulador.
     "drop_features": [], //Se meten los nombres de las columnas que se quiere eliminar y no se van a usar
     "continuous_features_discretize": [], //Se meten los nombres de las columnas que son CONTINUAS y se quieren DISCRETIZAR. Usado para el NAIVE BAYES. Dejar vacío si no se quiere discretizar nada
@@ -40,7 +43,8 @@
     "scaling": "max-min", //max-min, max, standard/z-score (Cualquier otra cosa si no se quiere escalar) En Naive Bayes y DecisionTree/RandomForest NO hay que escalar.
     "features_scale": [], //Se meten los nombres de las columnas que se quieran escalar. Si se deja vacío pero hay un escalador puesto, se escalan todas las columnas. Si no hay escalador, ninguna se escala.
     "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM). Poner cualquier otra cosa si no se quiere adaptar
-    "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria.
+    "bigramas_tfidf": true, //Si es true quiere decir que queremos u
+    "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria. Si es multiclass usar "auto"
     "sampling": "undersampling" //undersampling, oversampling (Cualquier otra cosa si no se quiere hacer balanceo)
   }
 }

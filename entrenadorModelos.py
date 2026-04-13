@@ -37,6 +37,18 @@ def load_data(file, columna_target, config):
         print(f"Error: La columna '{columna_target}' no se ha encontrado en el archivo. Comprueba el separador.")
         sys.exit(1)
 
+    # Leemos si el JSON nos pide agrupar. Si no dice nada, por defecto es False.
+    agrupar = config.get("preprocessing").get("agrupar_sentimiento_proyecto", False)
+
+    if agrupar:
+        diccionario_sustitucion = {
+            1: 'NEGATIVO', 2: 'NEGATIVO', 3: 'NEUTRO', 4: 'POSITIVO', 5: 'POSITIVO'
+        }
+        if columna_target in data.columns:
+            data[columna_target] = data[columna_target].replace(diccionario_sustitucion)
+            print(f"[*] JSON indica agrupar: Columna '{columna_target}' convertida a NEGATIVO/NEUTRO/POSITIVO")
+
+
     # Extraemos la lista de columnas, quitamos la objetivo y la ponemos al final para que el algoritmo nunca se confunda
     columnas = data.columns.tolist() #Convertir a lista tradicional de Python para poder usar sus comandos
     columnas.remove(columna_target)
@@ -199,6 +211,10 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         # 2. Comprobamos que esas columnas realmente existan en nuestro dataset (por seguridad)
         text_cols = [col for col in columnas_json if col in data_train.columns]
 
+        # --- LEEMOS EL INTERRUPTOR DE SENTIMIENTOS ---
+        # Si no existe en el JSON, por defecto será False
+        es_sentimiento = opciones.get("analisis_sentimientos", False)
+
         if len(text_cols) > 0:
             from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
@@ -206,7 +222,10 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 herramientas['vectorizers'] = {} #Preparamos la mochila para aceptar una nueva herramienta
                 # --- Selección de estrategia ---
                 if metodo_texto == "tf-idf":
-                    vectorizer_class = TfidfVectorizer
+                    if es_sentimiento:
+                        vectorizer_class = lambda: TfidfVectorizer(ngram_range=(1,2), min_df=3)
+                    else:
+                        vectorizer_class = TfidfVectorizer
                     prefijo = "tfidf"
                 elif metodo_texto == "frequency":
                     vectorizer_class = CountVectorizer  # Cuenta frecuencias: 1, 2, 3...
@@ -223,9 +242,9 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             for col in text_cols:
                 # --- IMPUTACIÓN PARA COLUMNAS DE TEXTO ---
                 # Rellenamos los huecos (NaN) de las columnas con texto con la palabra "desconocido" antes de vectorizar
-                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language']))
+                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], es_sentimiento))
                 if data_dev is not None:
-                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language']))
+                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], es_sentimiento))
                 # ----------------------------------------
 
 
@@ -256,7 +275,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                     data_dev = data_dev.drop(columns=[col]).join(df_dev) # Eliminamos la original y unimos las nuevas
 
     #######################
-    # Escalado de valores # TODO Según Aitziber es buena idea permitir no escalar todas las columnas y que quede a elección del usuario.
+    # Escalado de valores #
     #######################
     metodo_escalado = opciones.get("scaling") #Cogemos el valor de escalado del JSON
     if metodo_escalado in ["max-min", "max", "z-score", "standard"]:
@@ -349,7 +368,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         return reordenar(data_train)  # En modo test, solo devolvemos el test limpio
 
 
-def limpiar_texto(texto, idioma='english'):
+def limpiar_texto(texto, idioma='english', es_sentimiento=False):
     """Limpia, tokeniza, quita stopwords y lematiza un texto."""
     import pandas as pd
     # 1. Tratar nulos
@@ -364,6 +383,12 @@ def limpiar_texto(texto, idioma='english'):
 
     # 4. Eliminar Stopwords y signos de puntuación (.isalnum() filtra comas, puntos...)
     stop_words = set(stopwords.words(idioma))
+    if es_sentimiento: #Eliminamos solo las stop words que no aportan caracter sentimental a la frase.
+        if idioma == 'english':
+            palabras_protegidas = {"no", "not", "nor", "but", "against", "very", "isn't", "aren't", "wasn't", "doesn't"}
+            stop_words = stop_words - palabras_protegidas
+
+
     tokens_limpios = []
     for w in tokens:
         # Si la palabra NO es una stopword Y solo contiene letras/números (no es un signo de puntuación)
@@ -556,6 +581,9 @@ def naiveBayes(data_train, data_dev, alpha=None, tipo="multinomial"):
     elif tipo == "multinomial":
         from sklearn.naive_bayes import MultinomialNB
         modelo_naive_bayes = MultinomialNB(alpha=alpha)
+    elif tipo == "complement":
+        from sklearn.naive_bayes import ComplementNB
+        modelo_naive_bayes = ComplementNB(alpha=alpha)
     else:
         from sklearn.naive_bayes import GaussianNB
         modelo_naive_bayes = GaussianNB()
@@ -870,7 +898,7 @@ if __name__ == "__main__":
         mejor_f1 = -1.0
         mejor_modelo = None
         mejores_hiperparametros = ""
-        if tipo_nb in ["categorical", "multinomial"]:
+        if tipo_nb in ["categorical", "multinomial", "complement"]:
             # Bucle interno de hiperparámetros (Súper rápido porque el preprocesado ya está hecho)
             # Usamos arange para definir el salto exacto (step)
             # Sumamos un pequeño margen para incluir el max_alpha
