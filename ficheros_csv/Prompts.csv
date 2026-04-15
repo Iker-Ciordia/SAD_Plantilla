@@ -1,6 +1,6 @@
-﻿modelo,prompt empleado,frase,predicción,real
-"","Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta. Ejemplo 1: 'Me encanta la app' -> Positivo. Ejemplo 2: 'Se cierra sola' -> Negativo.","","",""
-"",¿Cuál es el sentimiento de esta review?,"","",""
-"",Clasifica esto:,"","",""
-"",Actúa como un usuario de la aplicación. Escribe 3 formas diferentes de decir este comentario manteniendo un sentimiento Neutro:,"","",""
-"","Reescribe el siguiente texto con otras palabras para generar datos sintéticos, manteniendo la polaridad Negativa:","","",""
+﻿modelo,tipo de prompt,prompt empleado,frase,predicción,real
+gemma4:e4b,few shot,"Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta. Ejemplo 1: 'I can't able to see any comments of anyone post & also my insta front is white and can't able to see my following people recent post please solve this problem quickly.' -> Negativo. Ejemplo 2: 'Better' -> Positivo.",Mediocre,"",Neutro
+gemma4:e4b,0 shot,¿Cuál es el sentimiento de esta review?,"","",""
+gemma4:e4b,0 shot,Clasifica esto:,"","",""
+gemma4:e4b,1 shot,"Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta. Ejemplo 1: 'Better' -> Positivo.","","",""
+"","","","","",""
