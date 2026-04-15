@@ -1,12 +1,13 @@
 {
+  "proyecto": true,
   "dataset_language": "english",
-  "algorithm": "NaiveBayes",
+  "algorithm": "KNN",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
     "p_max": 2,
     "k_min": 1,
-    "k_max": 7,
+    "k_max": 10,
     "w": ["uniform", "distance"],
     "step": 2
   },
@@ -27,8 +28,8 @@
     "step_alpha": 0.01
   },
   "preprocessing": {
-    "analisis_sentimientos": true,
-    "agrupar_sentimiento_proyecto": true,
+    "agrupar_sentimiento_proyecto": false,
+
     "separator": ",",
     "drop_features": ["reviewId", "gender", "location", "date"],
     "continuous_features_discretize": [],
@@ -38,7 +39,9 @@
     "impute_strategy": "mean",
     "scaling": "none",
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+
     "text_preprocess": "tf-idf",
+    "ngramas_tfidf": 1,
     "balance": "auto",
     "sampling": "none"
   }

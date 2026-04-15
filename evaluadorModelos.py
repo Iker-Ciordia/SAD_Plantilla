@@ -52,7 +52,7 @@ print(df_resultados.to_string()) # to_string() fuerza a imprimir todas las filas
 
 #Obtener matriz de confusión
 print("\n--- MATRIZ DE CONFUSIÓN ---")
-print(entrenadorModelos.calculate_confusion_matrix(predicciones, y_test_real))
+print(entrenadorModelos.calculate_confusion_matrix(y_test_real, predicciones))
 
 #Obtener métricas
 print("\n--- MÉTRICAS ---")

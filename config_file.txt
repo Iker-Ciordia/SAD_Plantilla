@@ -1,4 +1,5 @@
 {
+  "proyecto": true //Si queremos ajustar la plantilla al proyecto, poner true. Si no, false.
   "dataset_language": "english", //english, spanish, german... (Indica el idioma de las columnas categóricas del dataset. Usado para el preproceso de texto)
   "algorithm": "KNN", //KNN, DecisionTree, RandomForest, NaiveBayes
   "metric_to_evaluate": "macro", //macro, micro o binary (binary quiere decir que usará métricas para clasificación binaria, por lo que también indica implicitamente si la clasificación es binaria o no)
@@ -31,8 +32,8 @@
 
   },
   "preprocessing": {
-    "analisis_sentimientos": true //Si es True quiere decir que estamos ante una tarea de análisis de sentimientos
-    "agrupar_sentimiento_proyecto": true //Si es True quiere decir que las columnas de sentimientos son numéricas y no textuales
+    "agrupar_sentimiento_proyecto": true //Si es True quiere decir que las columnas de sentimientos son numéricas y no textuales y queremos convertirlas a textuales
+
     "separator": "," //Separador de los datos en el CSV. Actualmente "," porque es lo que más se usa, pero en el de SPAM/HAM se usas "\t" porque está separado por un tabulador.
     "drop_features": [], //Se meten los nombres de las columnas que se quiere eliminar y no se van a usar
     "continuous_features_discretize": [], //Se meten los nombres de las columnas que son CONTINUAS y se quieren DISCRETIZAR. Usado para el NAIVE BAYES. Dejar vacío si no se quiere discretizar nada
@@ -42,8 +43,9 @@
     "impute_strategy": "mean", //median, mean, most_frequent
     "scaling": "max-min", //max-min, max, standard/z-score (Cualquier otra cosa si no se quiere escalar) En Naive Bayes y DecisionTree/RandomForest NO hay que escalar.
     "features_scale": [], //Se meten los nombres de las columnas que se quieran escalar. Si se deja vacío pero hay un escalador puesto, se escalan todas las columnas. Si no hay escalador, ninguna se escala.
+
     "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM). Poner cualquier otra cosa si no se quiere adaptar
-    "bigramas_tfidf": true, //Si es true quiere decir que queremos u
+    "ngramas_tfidf": true, //Si queremos usar monogramas (1), bigramas (2), trigamas (3)... en TF-IDF
     "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria. Si es multiclass usar "auto"
     "sampling": "undersampling" //undersampling, oversampling (Cualquier otra cosa si no se quiere hacer balanceo)
   }

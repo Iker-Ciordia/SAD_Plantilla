@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
+import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer
 from sklearn.metrics import f1_score
@@ -211,9 +212,6 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         # 2. Comprobamos que esas columnas realmente existan en nuestro dataset (por seguridad)
         text_cols = [col for col in columnas_json if col in data_train.columns]
 
-        # --- LEEMOS EL INTERRUPTOR DE SENTIMIENTOS ---
-        # Si no existe en el JSON, por defecto será False
-        es_sentimiento = opciones.get("analisis_sentimientos", False)
 
         if len(text_cols) > 0:
             from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -222,10 +220,8 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 herramientas['vectorizers'] = {} #Preparamos la mochila para aceptar una nueva herramienta
                 # --- Selección de estrategia ---
                 if metodo_texto == "tf-idf":
-                    if es_sentimiento:
-                        vectorizer_class = lambda: TfidfVectorizer(ngram_range=(1,2), min_df=3)
-                    else:
-                        vectorizer_class = TfidfVectorizer
+                    ngramas = opciones.get("ngramas_tfidf")
+                    vectorizer_class = lambda: TfidfVectorizer(ngram_range=(1,ngramas), min_df=3)
                     prefijo = "tfidf"
                 elif metodo_texto == "frequency":
                     vectorizer_class = CountVectorizer  # Cuenta frecuencias: 1, 2, 3...
@@ -239,12 +235,13 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
             else: #Rama para preproceso de testing
                 prefijo = herramientas['prefijo_texto'] #Cargamos con qué tipo se preprocesó el train
 
+            proyecto = config.get("proyecto", False)
             for col in text_cols:
                 # --- IMPUTACIÓN PARA COLUMNAS DE TEXTO ---
                 # Rellenamos los huecos (NaN) de las columnas con texto con la palabra "desconocido" antes de vectorizar
-                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], es_sentimiento))
+                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto))
                 if data_dev is not None:
-                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], es_sentimiento))
+                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto))
                 # ----------------------------------------
 
 
@@ -368,7 +365,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         return reordenar(data_train)  # En modo test, solo devolvemos el test limpio
 
 
-def limpiar_texto(texto, idioma='english', es_sentimiento=False):
+def limpiar_texto(texto, idioma='english', proyecto=False):
     """Limpia, tokeniza, quita stopwords y lematiza un texto."""
     import pandas as pd
     # 1. Tratar nulos
@@ -383,7 +380,7 @@ def limpiar_texto(texto, idioma='english', es_sentimiento=False):
 
     # 4. Eliminar Stopwords y signos de puntuación (.isalnum() filtra comas, puntos...)
     stop_words = set(stopwords.words(idioma))
-    if es_sentimiento: #Eliminamos solo las stop words que no aportan caracter sentimental a la frase.
+    if proyecto: #Eliminamos solo las stop words que no aportan caracter sentimental a la frase.
         if idioma == 'english':
             palabras_protegidas = {"no", "not", "nor", "but", "against", "very", "isn't", "aren't", "wasn't", "doesn't"}
             stop_words = stop_words - palabras_protegidas
@@ -656,9 +653,26 @@ if __name__ == "__main__":
 
     # A. Cargamos los datos
     data = load_data(fichero, columna_objetivo, config)
+    data_train_y_dev = data
 
-    # B. División del conjunto de train con el de dev. Evitamos Data Leakage para CUALQUIER algoritmo
-    data_train, data_dev = train_test_split(data, test_size=0.20, random_state=42, stratify=data[columna_objetivo])
+    if config.get("proyecto", False): #Si estamos trabajando en el proyecto
+        if not os.path.exists("./ficheros_csv/Instagram_test.csv") and not os.path.exists("./ficheros_csv/Instagram_traindev.csv"): #Si no se ha separado previamente en train+dev y test
+            data_train_y_dev, data_test = train_test_split(data, test_size=0.15, random_state=42, stratify=data[columna_objetivo])
+            data_train_y_dev.to_csv("ficheros_csv/Instagram_traindev.csv", index=False)
+            data_test.to_csv("ficheros_csv/Instagram_test.csv", index=False)
+            data_train, data_dev = train_test_split(data_train_y_dev, test_size=0.177, random_state=42,
+                                                    stratify=data_train_y_dev[columna_objetivo])  # Si hay que dividir en 70% (train), 15% (dev) y 15% (test)
+
+        else: #Si se ha separado previamente
+            data = load_data("./ficheros_csv/Instagram_traindev.csv", columna_objetivo, config)
+            data_train, data_dev = train_test_split(data, test_size=0.177, random_state=42,
+                                                    stratify=data[columna_objetivo])
+    else: #No es el proyecto
+        # B. División del conjunto de train con el de dev. Evitamos Data Leakage para CUALQUIER algoritmo
+        data_train, data_dev = train_test_split(data_train_y_dev, test_size=0.2, random_state=42,
+                                                stratify=data_train_y_dev[columna_objetivo])
+
+
 
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
