@@ -1,7 +1,7 @@
 {
   "proyecto": true,
   "dataset_language": "english",
-  "algorithm": "KNN",
+  "algorithm": "NaiveBayes",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -19,12 +19,12 @@
     "criterion":  ["gini", "entropy"]
   },
   "hyperparametersRandomForest": {
-    "n_estimators": 50
+    "n_estimators": 200
   },
   "hyperparametersNaiveBayes": {
     "type": "complement",
     "min_alpha": 0.01,
-    "max_alpha": 1,
+    "max_alpha": 3,
     "step_alpha": 0.01
   },
   "preprocessing": {
@@ -41,7 +41,7 @@
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
 
     "text_preprocess": "tf-idf",
-    "ngramas_tfidf": 1,
+    "ngramas_tfidf": 3,
     "balance": "auto",
     "sampling": "none"
   }

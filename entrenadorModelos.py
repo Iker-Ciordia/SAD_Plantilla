@@ -831,13 +831,14 @@ if __name__ == "__main__":
     elif algoritmo == "RandomForest":
         print("\n[->] Ejecutando modelo: Random Forest")
         # Leemos los rangos del JSON (con valores por defecto por si acaso)
-        hiper_RandomForest = config.get("hyperparametersDecisionTree", {})
+        hiper_DecisionTree = config.get("hyperparametersDecisionTree", {})
+        hiper_RandomForest = config.get("hyperparametersRandomForest", {})
         n_estimators = hiper_RandomForest.get("n_estimators", 100)
-        min_depth = hiper_RandomForest.get("min_depth", 1)
-        max_depth = hiper_RandomForest.get("max_depth", 10)
-        min_samples_split = hiper_RandomForest.get("min_samples_split", 5)
-        min_samples_leaf = hiper_RandomForest.get("min_samples_leaf", 5)
-        criterion_lista = hiper_RandomForest.get("criterion", "Gini")
+        min_depth = hiper_DecisionTree.get("min_depth", 1)
+        max_depth = hiper_DecisionTree.get("max_depth", 10)
+        min_samples_split = hiper_DecisionTree.get("min_samples_split", 5)
+        min_samples_leaf = hiper_DecisionTree.get("min_samples_leaf", 5)
+        criterion_lista = hiper_DecisionTree.get("criterion", "Gini")
 
         # Por seguridad: si criterion_lista es un solo string, lo convertimos a lista
         if isinstance(criterion_lista, str):

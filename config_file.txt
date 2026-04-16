@@ -45,7 +45,7 @@
     "features_scale": [], //Se meten los nombres de las columnas que se quieran escalar. Si se deja vacío pero hay un escalador puesto, se escalan todas las columnas. Si no hay escalador, ninguna se escala.
 
     "text_preprocess": "tf-idf", //tf-idf, one-hot, frequency (Si usamos tf-idf NUNCA escalar valores, porque ya están escalados y gasta muchísima RAM). Poner cualquier otra cosa si no se quiere adaptar
-    "ngramas_tfidf": true, //Si queremos usar monogramas (1), bigramas (2), trigamas (3)... en TF-IDF
+    "ngramas_tfidf": 1, //Si queremos usar monogramas (1), bigramas (2), trigamas (3)... en TF-IDF
     "balance": 0.4, //Indica el ratio de balanceo del dataset. 0.4 indica que el 40% de los datos será de la clase minoritaria. Si es multiclass usar "auto"
     "sampling": "undersampling" //undersampling, oversampling (Cualquier otra cosa si no se quiere hacer balanceo)
   }
