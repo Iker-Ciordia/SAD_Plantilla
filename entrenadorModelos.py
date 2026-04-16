@@ -368,12 +368,34 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
 def limpiar_texto(texto, idioma='english', proyecto=False):
     """Limpia, tokeniza, quita stopwords y lematiza un texto."""
     import pandas as pd
+    import emoji
     # 1. Tratar nulos
     if pd.isna(texto) or str(texto).strip() == "": #Si la casilla está vacía o si solo tiene espacios en blanco
         return "desconocido"
 
     # 2. Minúsculas
     texto = str(texto).lower()
+
+    # Convertimos el emoji a texto. Para que una cara feliz sea tipo Happy_Face y NaiveBayes sepa que es positivo
+    if idioma == 'english':
+        texto = emoji.demojize(texto, language='en')
+
+        # Limpiamos los símbolos del emoji para que sobrevivan al isalnum
+        # ":smiling_face_with_heart-eyes:" -> " smiling face with heart eyes "
+        texto = texto.replace(":", " ").replace("_", " ").replace("-", " ")
+
+    if idioma == 'english':
+        contracciones = { #Expandimos las contracciones para que luego no nos las carguemos de nuevo con el isalnum
+            "isn't": "is not", "aren't": "are not", "wasn't": "was not",
+            "weren't": "were not", "haven't": "have not", "hasn't": "has not",
+            "hadn't": "had not", "won't": "will not", "wouldn't": "would not",
+            "don't": "do not", "doesn't": "does not", "didn't": "did not",
+            "can't": "can not", "couldn't": "could not", "shouldn't": "should not",
+            "mightn't": "might not", "mustn't": "must not"
+        }
+        for contraccion, expansion in contracciones.items():
+            texto = texto.replace(contraccion, expansion)
+
 
     # 3. Tokenizar
     tokens = word_tokenize(texto)

@@ -24,7 +24,7 @@
   "hyperparametersNaiveBayes": {
     "type": "complement",
     "min_alpha": 0.01,
-    "max_alpha": 3,
+    "max_alpha": 2,
     "step_alpha": 0.01
   },
   "preprocessing": {
