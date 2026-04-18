@@ -1,0 +1,4 @@
+- Adaptar la plantilla para tener siempre el mismo fichero dev, y que todos los modelos trabajen con ese train y dev.
+- Crear en una función de un fichero .py extra que hace llamadas a algún modelo de Ollama y clasifica las instancias del fichero dev generado previamente.
+- Crear una función del fichero .py anterior que genera nuevas instancias (con el modelo generativo) de la clase minoritaria en otro fichero.
+- 
