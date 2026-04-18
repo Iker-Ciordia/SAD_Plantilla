@@ -32,7 +32,7 @@ Tiene DOS modos de funcionamiento principales:
   --mode       : Modo de ejecución: 'classify' o 'generate' (Por defecto: classify).
   --gen_class  : Clase a inventar en modo generate (Por defecto: POSITIVO).
   --gen_count  : Cantidad de textos a inventar (Por defecto: 10).
-  --out_file   : Dónde guardar los textos inventados (Por defecto: instancias_generadas.csv).
+  --out_file   : Dónde guardar los textos inventados (Por defecto: nuevo_{modelo}.csv).
 
   *Nota: Debido a cómo está programado, --file, --text_col, --target_col 
    y --config son OBLIGATORIOS siempre, incluso en modo 'generate' donde 

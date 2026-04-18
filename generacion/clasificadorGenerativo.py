@@ -20,8 +20,13 @@ parser.add_argument('--config', type=str, required=True, help='Ruta del fichero 
 parser.add_argument('--mode', type=str, choices=['classify', 'generate'], default='classify', help='Modo de ejecución: classify o generate')
 parser.add_argument('--gen_class', type=str, default='POSITIVO', help='Clase a generar (ej. POSITIVO, NEGATIVO, NEUTRO)')
 parser.add_argument('--gen_count', type=int, default=10, help='Número de instancias a generar')
-parser.add_argument('--out_file', type=str, default='instancias_generadas.csv', help='Ruta para guardar los datos generados')
+parser.add_argument('--out_file', type=str, default=None, help='Ruta para guardar los datos generados (por defecto: nuevo_{modelo}.csv)')
 args=parser.parse_args()
+
+if args.out_file is None:
+    # Reemplazamos ':' por '_' ya que en Windows los dos puntos no son válidos en nombres de archivos
+    modelo_seguro = args.model.replace(':', '_')
+    args.out_file = f'nuevo_{modelo_seguro}.csv'
 
 def clasificar_instancias(args):
     # Prompt actualizado para disuadir el uso de <think>
@@ -109,7 +114,8 @@ The comment must be natural, varied, of the same style and length as the example
 Here are some real examples with {sentimiento} sentiment to give you context:
 {ejemplos}
 
-Respond ONLY with the text of the generated comment. Do not include quotes, introductions, additional notes, or <think> reasoning tags."""
+Respond ONLY with the text of the generated comment. Do not include quotes, commas (,), introductions, additional notes, or <think> reasoning tags.
+CRITICAL: NEVER use commas in your response as it will break the CSV formatting."""
     
     prompt = PromptTemplate.from_template(template)
     # Aumentamos la temperatura para que los comentarios generados sean creativos y variados
