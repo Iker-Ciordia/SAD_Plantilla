@@ -1,6 +1,5 @@
 ﻿modelo,tipo de prompt,prompt empleado,frase,predicción,real
 gemma4:e4b,few shot,"Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta. Ejemplo 1: 'I can't able to see any comments of anyone post & also my insta front is white and can't able to see my following people recent post please solve this problem quickly.' -> Negativo. Ejemplo 2: 'Better' -> Positivo.",Mediocre,"",Neutro
-gemma4:e4b,0 shot,¿Cuál es el sentimiento de esta review?,"","",""
-gemma4:e4b,0 shot,Clasifica esto:,"","",""
+gemma4:e4b,0 shot,"Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta.","","",""
 gemma4:e4b,1 shot,"Eres un analizador de sentimientos experto. Clasifica el comentario en 'Positivo', 'Negativo' o 'Neutro'. Responde ÚNICAMENTE con la etiqueta. Ejemplo 1: 'Better' -> Positivo.","","",""
 "","","","","",""
