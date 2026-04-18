@@ -1,0 +1,63 @@
+========================================================================
+          GUÍA DE USO: clasificadorGenerativo.py
+========================================================================
+
+1. ¿QUÉ HACE ESTE SCRIPT?
+------------------------------------------------------------------------
+Este script de Python utiliza un Modelo de Lenguaje Grande (LLM) en local
+a través de Ollama (por defecto, gemma2:2b) para tareas de Procesamiento 
+de Lenguaje Natural (NLP). 
+
+Tiene DOS modos de funcionamiento principales:
+
+  A) MODO CLASIFICACIÓN ('classify'): Actúa como un evaluador. Lee un 
+     archivo CSV existente, le pide al LLM que clasifique los textos 
+     (en POSITIVO, NEGATIVO o NEUTRO) y compara las respuestas de la IA 
+     con la realidad para generar métricas (F1, Precision, Recall) y 
+     una matriz de confusión.
+
+  B) MODO GENERACIÓN ('generate'): Actúa como un creador de datos 
+     sintéticos. Le pide al LLM que invente nuevos comentarios 
+     realistas para una clase específica (ej. crear 50 comentarios 
+     neutros) para ayudar a balancear tu dataset.
+
+2. ARGUMENTOS DISPONIBLES
+------------------------------------------------------------------------
+  --model      : Nombre del modelo de Ollama (ej. llama3, gemma2:2b).
+  --file       : Ruta al archivo CSV (OBLIGATORIO).
+  --text_col   : Nombre de la columna de texto (OBLIGATORIO).
+  --target_col : Nombre de la columna del sentimiento (OBLIGATORIO).
+  --sample     : Límite de filas a evaluar en modo classify (Por defecto: 200).
+  --config     : Ruta al JSON para leer la métrica (OBLIGATORIO).
+  --mode       : Modo de ejecución: 'classify' o 'generate' (Por defecto: classify).
+  --gen_class  : Clase a inventar en modo generate (Por defecto: POSITIVO).
+  --gen_count  : Cantidad de textos a inventar (Por defecto: 10).
+  --out_file   : Dónde guardar los textos inventados (Por defecto: instancias_generadas.csv).
+
+  *Nota: Debido a cómo está programado, --file, --text_col, --target_col 
+   y --config son OBLIGATORIOS siempre, incluso en modo 'generate' donde 
+   realmente no se usa el archivo de entrada. Puedes pasarle archivos "dummy".
+
+3. ¿CÓMO LLAMARLO? (EJEMPLOS DE EJECUCIÓN)
+------------------------------------------------------------------------
+  >> EJEMPLO 1: MODO CLASIFICACIÓN (Evaluar el modelo LLM)
+  python generacion\clasificadorGenerativo.py --mode classify --file clasificacion\ficheros_csv\Instagram_traindev.csv --text_col content --target_col score --config config_file.json --sample 50 --model tinydolphin
+  (Esto evaluará las primeras 50 filas del archivo Instagram_traindev.csv usando el modelo tinydolphin)
+
+  >> EJEMPLO 2: MODO GENERACIÓN (Inventar 100 instancias NEUTRAS)
+  python generacion\clasificadorGenerativo.py --mode generate --gen_class NEUTRO --gen_count 100 --out_file nuevos_neutros.csv --file clasificacion\ficheros_csv\Instagram_traindev.csv --text_col content --target_col score --config config_file.json --model tinydolphin
+  (Esto inventará 100 comentarios neutros y los guardará en nuevos_neutros.csv. El archivo .csv de entrada se pone solo para satisfacer los requisitos obligatorios).
+
+4. ARCHIVOS QUE GENERA
+------------------------------------------------------------------------
+  - En modo 'classify': 
+    NO genera ningún archivo físico. Toda la salida (predicciones, matriz 
+    de confusión y métricas) se imprime directamente en la consola/terminal.
+
+  - En modo 'generate': 
+    Genera UN archivo CSV. El nombre y ruta de este archivo lo defines 
+    tú con el parámetro --out_file. 
+    El archivo tendrá dos columnas: la indicada en --text_col (con los 
+    textos inventados) y la indicada en --target_col (con la etiqueta 
+    fija que pediste generar).
+========================================================================
