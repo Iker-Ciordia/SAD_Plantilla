@@ -81,7 +81,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     config = json.load(file)
 
     # --- EL INTERRUPTOR INTELIGENTE ---
-    is_train = herramientas_guardadas is None #Si la variable herramientas... tiene un valor, is_train será True, si es None, será False
+    is_train = herramientas_guardadas is None #Si la variable herramientas... está vacía, is_train será True, si tiene algún valor, será False
 
     opciones = config.get("preprocessing", {}) #Nos quedamos con el segundo JSON de parámetros de preprocesado dentro del principal
     print(f"Aplicando preprocesado desde {config_file}...")
@@ -352,6 +352,8 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
     # Volvemos a asegurar que la columna objetivo (y) esté al final tras las posibles modificaciones
     # Reordenar por seguridad (Objetivo siempre al final)
     def reordenar(df):
+        if df is None: #Condición expresa para curarnos en salud en clustering
+            return None
         cols = df.columns.tolist()
         if columna_y in cols:
             cols.remove(columna_y)
@@ -689,7 +691,7 @@ if __name__ == "__main__":
 
 
 
-        else: #Si se ha separado previamente
+        else: #Si se ha separado previamente en train, dev y test
             data_train = load_data("ficheros_csv/Instagram_train.csv", columna_objetivo, config)
             data_dev = load_data("ficheros_csv/Instagram_dev.csv", columna_objetivo, config)
 

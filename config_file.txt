@@ -29,8 +29,13 @@
   "min_alpha": 0.01, //Suavizado de Laplace
   "max_alpha": 1, //Suavizado de Laplace
   "step_alpha": 0.01 //longitud de los saltos de min a max
-
   },
+  "hyperparametersKMeans": { //Hiperparámetros del algoritmo de clustering K-Means
+    "k_min": 1, //Número mínimo de clusters a buscar.
+    "k_max": 7 //Número máximo de clusters a buscar
+    "step": 1 //Saltos entre K-s
+    "n_inicios": 4 //Número de veces que se va a reiniciar el K-Means con otros centroides distintos para obtener el mejor resultado
+  }
   "preprocessing": {
     "agrupar_sentimiento_proyecto": true //Si es True quiere decir que las columnas de sentimientos son numéricas y no textuales y queremos convertirlas a textuales
 
