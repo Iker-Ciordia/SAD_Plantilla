@@ -1,7 +1,7 @@
 import sys
 import json
 import os
-import plt
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
 # Forzamos a Python a mirar una carpeta más arriba (la raíz SAD_Plantilla)
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     # A. Cargamos los datos
     data = entrenadorModelos.load_data(fichero, columna_objetivo, config)
 
+
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
         data_pre, _, mis_herramientas = entrenadorModelos.apply_preprocessing(config_file, data, None)  # Preprocesamos los datos (lematizar, tokenizar, eliminar stopwords... para clustering
@@ -54,11 +55,11 @@ if __name__ == "__main__":
         # Crea la carpeta en el directorio actual
         import os
 
-        os.mkdir("datos_preprocesados_clustering")
+        os.mkdir("./clustering/datos_preprocesados_clustering")
         print(f"Directorio 'datos_preprocesados_clustering' creado exitosamente.")
     except FileExistsError:
         print(f"Error: El directorio 'datos_preprocesados_clustering' ya existe.")
-    data.to_csv("datos_preprocesados_clustering/datos_preprocesados.csv", index=False)
+    data_pre.to_csv("./clustering/datos_preprocesados_clustering/datos_preprocesados.csv", index=False)
 
     # --- ENRUTADOR DE ALGORITMOS ---
 
@@ -94,3 +95,45 @@ if __name__ == "__main__":
         plt.ylabel('Inercia (Suma de distancias)')
         plt.title('Método del Codo para determinar K óptimo')
         plt.show()
+
+        # --- PROCESO FINAL DE EXTRACCIÓN ---
+
+        # 1. Elegimos el K que nos ha gustado del gráfico del codo
+        k_final = int(input("\n[?] Introduce el valor de K óptimo que has visto en el gráfico: "))
+        modelo_final = K_Means(X_clustering, n_clusters=k_final, n_init=n_inicios)
+
+        # 2. Asignar cada instancia a su cluster en el DataFrame original
+        # Usamos .copy() para no tocar el 'data' original por error
+        data_final = data.copy()
+        data_final['cluster_id'] = modelo_final.labels_
+
+        # 3. Extraer las palabras más importantes de cada tópico
+        print("\n" + "=" * 30)
+        print("  PALABRAS CLAVE POR TÓPICO")
+        print("=" * 30)
+
+        # Necesitamos el vectorizador que tenemos guardado en 'mis_herramientas'
+        if 'vectorizers' in mis_herramientas:
+            # Cogemos el nombre de la primera columna de texto que se vectorizó
+            col_name = list(mis_herramientas['vectorizers'].keys())[0]
+            vectorizador = mis_herramientas['vectorizers'][col_name]
+
+            # Obtenemos los nombres de las palabras (columnas)
+            nombres_palabras = vectorizador.get_feature_names_out()
+
+            # Obtenemos los centroides (la "esencia" de cada grupo)
+            centroides = modelo_final.cluster_centers_
+
+            for i, centroide in enumerate(centroides):
+                # Ordenamos los índices del centroide de mayor a menor peso
+                # cogemos los 10 primeros
+                indices_top = centroide.argsort()[::-1][:10]
+                top_palabras = [nombres_palabras[idx] for idx in indices_top]
+
+                print(f"\n[Tópico #{i}]")
+                print(f" -> {', '.join(top_palabras)}")
+
+        # 4. Guardar el resultado en un CSV para Tableau
+        ruta_salida = "./clustering/resultados_agrupados.csv"
+        data_final.to_csv(ruta_salida, index=False)
+        print(f"\n[V] CSV con clusters guardado en: {ruta_salida}")

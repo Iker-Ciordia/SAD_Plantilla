@@ -34,7 +34,7 @@
     "n_inicios": 10
   },
   "preprocessing": {
-    "agrupar_sentimiento_proyecto": false,
+    "agrupar_sentimiento_proyecto": true,
 
     "separator": ",",
     "drop_features": ["reviewId", "gender", "location", "date"],

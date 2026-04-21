@@ -236,12 +236,13 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
                 prefijo = herramientas['prefijo_texto'] #Cargamos con qué tipo se preprocesó el train
 
             proyecto = config.get("proyecto", False)
+            algoritmo = config.get("algorithm", "KNN") #Esto se usa para distinguir si estamos en clustering o clasificación
             for col in text_cols:
                 # --- IMPUTACIÓN PARA COLUMNAS DE TEXTO ---
                 # Rellenamos los huecos (NaN) de las columnas con texto con la palabra "desconocido" antes de vectorizar
-                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto))
+                data_train[col] = data_train[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto, algoritmo))
                 if data_dev is not None:
-                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto))
+                    data_dev[col] = data_dev[col].apply(lambda x: limpiar_texto(x, config['dataset_language'], proyecto, algoritmo))
                 # ----------------------------------------
 
 
@@ -367,7 +368,7 @@ def apply_preprocessing(config_file, data_train, data_dev=None, herramientas_gua
         return reordenar(data_train)  # En modo test, solo devolvemos el test limpio
 
 
-def limpiar_texto(texto, idioma='english', proyecto=False):
+def limpiar_texto(texto, idioma='english', proyecto=False, algoritmo="KNN"):
     """Limpia, tokeniza, quita stopwords y lematiza un texto."""
     import pandas as pd
     import emoji
@@ -404,7 +405,7 @@ def limpiar_texto(texto, idioma='english', proyecto=False):
 
     # 4. Eliminar Stopwords y signos de puntuación (.isalnum() filtra comas, puntos...)
     stop_words = set(stopwords.words(idioma))
-    if proyecto: #Eliminamos solo las stop words que no aportan caracter sentimental a la frase.
+    if proyecto and algoritmo in ["KNN", "DecisionTree", "RandomForest", "NaiveBayes"]: #Eliminamos solo las stop words que no aportan caracter sentimental a la frase si estamos en el proyecto y clasificiación (no clustering)
         if idioma == 'english':
             palabras_protegidas = {"no", "not", "nor", "but", "against", "very", "isn't", "aren't", "wasn't", "doesn't"}
             stop_words = stop_words - palabras_protegidas
