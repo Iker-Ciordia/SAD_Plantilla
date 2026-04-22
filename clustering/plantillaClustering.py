@@ -2,6 +2,8 @@ import sys
 import json
 import os
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 from sklearn.cluster import KMeans
 
 # Forzamos a Python a mirar una carpeta más arriba (la raíz SAD_Plantilla)
@@ -14,6 +16,72 @@ def K_Means(data, n_clusters=2, n_init=2):
     kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=42)
     kmeans.fit(data)
     return kmeans
+
+
+def extraer_top_palabras_por_clase(X_clustering, data_final, columna_objetivo,
+                                   vectorizador, n_palabras=10):
+
+    #Calcula las n mejores palabras de cada tópico
+    nombres_palabras = vectorizador.get_feature_names_out()
+    if isinstance(X_clustering, np.ndarray):
+        X_array = X_clustering
+    elif hasattr(X_clustering, "values"):
+        X_array = X_clustering.values
+    else:
+        X_array = X_clustering.toarray()
+
+    # Aseguramos que los índices están alineados
+    X_array_reindexed = X_array  # ya viene alineado con data_final
+
+    clusters_unicos = sorted(data_final["cluster_id"].unique())
+    clases_unicas   = sorted(data_final[columna_objetivo].dropna().unique())
+
+    resultados = []
+
+    print("\n" + "=" * 50)
+    print("  PALABRAS CLAVE POR TÓPICO Y CLASE REAL")
+    print("=" * 50)
+
+    for cluster_id in clusters_unicos:
+        print(f"\n{'─' * 50}")
+        print(f"  TÓPICO #{cluster_id}")
+        print(f"{'─' * 50}")
+
+        mascara_cluster = (data_final["cluster_id"] == cluster_id).values
+
+        for clase in clases_unicas:
+            mascara_clase   = (data_final[columna_objetivo] == clase).values
+            mascara_conjunta = mascara_cluster & mascara_clase
+
+            n_instancias = mascara_conjunta.sum()
+            if n_instancias == 0:
+                print(f"\n  [{clase}]  →  (sin instancias en este tópico)")
+                continue
+
+            # Centroide medio del subgrupo
+            subgrupo   = X_array_reindexed[mascara_conjunta]
+            centroide  = subgrupo.mean(axis=0)
+
+            indices_top  = centroide.argsort()[::-1][:n_palabras]
+            top_palabras = [(nombres_palabras[i], round(float(centroide[i]), 5))
+                            for i in indices_top]
+
+            print(f"\n  [{clase}]  ({n_instancias} instancias)")
+            for rank, (palabra, peso) in enumerate(top_palabras, start=1):
+                print(f"    {rank:>2}. {palabra:<25} {peso:.5f}")
+
+            for rank, (palabra, peso) in enumerate(top_palabras, start=1):
+                resultados.append({
+                    "cluster_id"  : cluster_id,
+                    "clase"       : clase,
+                    "n_instancias": n_instancias,
+                    "rank"        : rank,
+                    "palabra"     : palabra,
+                    "peso_medio"  : peso,
+                })
+
+    df_resultado = pd.DataFrame(resultados)
+    return resultados, df_resultado
 
 
 if __name__ == "__main__":
@@ -44,7 +112,6 @@ if __name__ == "__main__":
     # A. Cargamos los datos
     data = entrenadorModelos.load_data(fichero, columna_objetivo, config)
 
-
     # C. Aplicamos el preprocesado pasándole ambos trozos
     if config_file:
         data_pre, _, mis_herramientas = entrenadorModelos.apply_preprocessing(config_file, data, None)  # Preprocesamos los datos (lematizar, tokenizar, eliminar stopwords... para clustering
@@ -52,9 +119,6 @@ if __name__ == "__main__":
 
     # Bloque para ver los datos preprocesados
     try:
-        # Crea la carpeta en el directorio actual
-        import os
-
         os.mkdir("./clustering/datos_preprocesados_clustering")
         print(f"Directorio 'datos_preprocesados_clustering' creado exitosamente.")
     except FileExistsError:
@@ -76,15 +140,11 @@ if __name__ == "__main__":
         step = hiper_kmeans.get("step", 1)
         n_inicios = hiper_kmeans.get("n_inicios", 10)
 
-
         inercias = []
-        #Bucle del hiperparámetro K
         ks = range(k_min, k_max + 1, step)
         for k in ks:  # Avanza con lo que el usuario del script crea conveniente
             print(f"\n--------------------------------------------------")
             print(f"--> Evaluando combinación: k={k}")
-
-            # Llamamos a la función
             modelo = K_Means(X_clustering, n_clusters=k, n_init=n_inicios)
             inercias.append(modelo.inertia_) #La inercia obtenida con este modelo de KMeans la guardamos para el codo.
 
@@ -103,37 +163,32 @@ if __name__ == "__main__":
         modelo_final = K_Means(X_clustering, n_clusters=k_final, n_init=n_inicios)
 
         # 2. Asignar cada instancia a su cluster en el DataFrame original
-        # Usamos .copy() para no tocar el 'data' original por error
         data_final = data.copy()
         data_final['cluster_id'] = modelo_final.labels_
 
-        # 3. Extraer las palabras más importantes de cada tópico
-        print("\n" + "=" * 30)
-        print("  PALABRAS CLAVE POR TÓPICO")
-        print("=" * 30)
-
-        # Necesitamos el vectorizador que tenemos guardado en 'mis_herramientas'
+        # 3. Imprimir pesos de las palabras clave por tópico
         if 'vectorizers' in mis_herramientas:
-            # Cogemos el nombre de la primera columna de texto que se vectorizó
-            col_name = list(mis_herramientas['vectorizers'].keys())[0]
+            col_name     = list(mis_herramientas['vectorizers'].keys())[0]
             vectorizador = mis_herramientas['vectorizers'][col_name]
 
-            # Obtenemos los nombres de las palabras (columnas)
-            nombres_palabras = vectorizador.get_feature_names_out()
+            # Necesitamos X como array denso con el mismo índice que data_final
+            if isinstance(X_clustering, np.ndarray):
+                X_array = X_clustering
+            elif hasattr(X_clustering, "values"):
+                X_array = X_clustering.values
+            else:
+                X_array = X_clustering.toarray()
 
-            # Obtenemos los centroides (la "esencia" de cada grupo)
-            centroides = modelo_final.cluster_centers_
+            _, df_palabras_clase = extraer_top_palabras_por_clase(
+                X_array, data_final, columna_objetivo, vectorizador, n_palabras=10
+            )
 
-            for i, centroide in enumerate(centroides):
-                # Ordenamos los índices del centroide de mayor a menor peso
-                # cogemos los 10 primeros
-                indices_top = centroide.argsort()[::-1][:10]
-                top_palabras = [nombres_palabras[idx] for idx in indices_top]
+            # Guardar CSV de palabras clave por tópico y clase
+            ruta_palabras_clase = "./clustering/palabras_clave_por_clase.csv"
+            df_palabras_clase.to_csv(ruta_palabras_clase, index=False)
+            print(f"\n[V] CSV de palabras clave por tópico y clase guardado en: {ruta_palabras_clase}")
 
-                print(f"\n[Tópico #{i}]")
-                print(f" -> {', '.join(top_palabras)}")
-
-        # 4. Guardar el resultado en un CSV para Tableau
+        # 4. Guardar el resultado principal con los cluster_id en CSV
         ruta_salida = "./clustering/resultados_agrupados.csv"
         data_final.to_csv(ruta_salida, index=False)
         print(f"\n[V] CSV con clusters guardado en: {ruta_salida}")
