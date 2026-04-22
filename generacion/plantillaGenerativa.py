@@ -7,12 +7,11 @@ from langchain_core.prompts import PromptTemplate
 from langchain_ollama.llms import OllamaLLM
 from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score
 
-ruta_json = 'generacion/generacion.json'  # Asegúrate de que el nombre coincide con tu archivo
+ruta_json = 'generacion/generacion.json'
 
 try:
     with open(ruta_json, 'r', encoding='utf-8') as f:
         config_dict = json.load(f)
-        # Convertimos el diccionario en un objeto para seguir usando args.propiedad
         args = SimpleNamespace(**config_dict)
 except FileNotFoundError:
     print(f"[!] ERROR: No se ha encontrado el archivo de configuración '{ruta_json}'.")
@@ -35,7 +34,6 @@ def normalizar(val):
 
 
 def clasificar_instancias(args):
-    print(f"[*] Cargando datos de evaluación desde {args.file}...")
     df = pd.read_csv(args.file, sep=",")
 
     if getattr(args, 'train_file', None) is None:
@@ -102,6 +100,7 @@ Label:"""
         array_real = []
         array_prediccion = []
         etiquetas_validas = ['POSITIVO', 'NEGATIVO', 'NEUTRO']
+        registro_prompts_actual = []
 
         for n, row in df.iterrows():
             if n == args.sample:
@@ -116,12 +115,15 @@ Label:"""
             respuesta_limpia = re.sub(r'<think>.*?</think>', '', respuesta_cruda, flags=re.IGNORECASE | re.DOTALL)
             respuesta = respuesta_limpia.strip().upper()
 
-            registro_prompts_total.append({
+            # Guardamos TODAS las frases en la temporal, con el hueco del F-score vacío
+            registro_prompts_actual.append({
+                "F-score": None,
                 "modelo/tamaño": args.model,
                 "tipo de prompt": tipo_prompt,
-                "prompt": template.replace("{texto}", texto),
+                "prompt empleado": template.strip(),
                 "entrada": texto,
-                "salida": respuesta_limpia.strip()
+                "salida (prediccion)": respuesta_limpia.strip(),
+                "salida (real)": real
             })
 
             if respuesta in etiquetas_validas:
@@ -138,20 +140,31 @@ Label:"""
         print(f"\n--- Resultados para {tipo_prompt.upper()} ---")
         print(matriz_bonita)
 
-        # Usamos la métrica directamente desde el JSON general
         tipo_metrica = args.metric_to_evaluate
 
-        print(
-            f"\nPrecision ({tipo_metrica}): {precision_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0):.4f}")
-        print(
-            f"Recall ({tipo_metrica}): {recall_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0):.4f}")
-        print(
-            f"F-score ({tipo_metrica}): {f1_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0):.4f}")
+        precision_val = precision_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0)
+        recall_val = recall_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0)
+        fscore_val = f1_score(array_real, array_prediccion, average=tipo_metrica, zero_division=0)
+
+        print(f"\nPrecision ({tipo_metrica}): {precision_val:.4f}")
+        print(f"Recall ({tipo_metrica}): {recall_val:.4f}")
+        print(f"F-score ({tipo_metrica}): {fscore_val:.4f}")
+
+        # --- RELLENAR EL F-SCORE EN TODAS LAS FILAS DE ESTE EXPERIMENTO ---
+        for registro in registro_prompts_actual:
+            registro["F-score"] = round(fscore_val, 4)
+            registro_prompts_total.append(registro)
+
+    nombre_archivo = os.path.join("generacion", "prompts_test.csv")
+    if not os.path.exists("generacion"):
+        os.makedirs("generacion")
+
+    hdr = not os.path.exists(nombre_archivo)
 
     df_prompts = pd.DataFrame(registro_prompts_total)
-    nombre_archivo = "prompts_test.csv"
-    hdr = not os.path.exists(nombre_archivo)
     df_prompts.to_csv(nombre_archivo, mode='a', index=False, header=hdr, encoding='utf-8')
+
+    print(f"[+] Registros añadidos correctamente en: {nombre_archivo}")
 
 
 def generar_instancias(args):
