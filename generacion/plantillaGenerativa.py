@@ -178,13 +178,17 @@ def generar_instancias(args):
         print(f"[!] Aviso: No se pudieron cargar ejemplos de contexto de {args.file} ({e})")
 
     template = """You are an expert data generator for Machine Learning training. 
-Generate a NEW, realistic user comment or review that clearly expresses a {sentimiento} sentiment.
+Generate a NEW, realistic user comment or review about the Instagram app that clearly expresses a {sentimiento} sentiment.
 The comment must be natural, varied, of the same style and length as the examples, and strictly in English.
 
 Here are some real examples with {sentimiento} sentiment to give you context:
 {ejemplos}
 
-Respond ONLY with the text of the generated comment. Do not include quotes, commas (,), introductions, additional notes, or <think> reasoning tags.
+If you've not received any examples it means you can generate the comment/review as you wish (you don't necessarily need to repeat the sentence structure) as long as you follow the rules
+set before about the topic.
+
+Respond ONLY with the text of the generated comment. Do not include commas (, in the final sentence. However, you can formulate sentences as if they had commas but without writing them), 
+introductions, additional notes, or <think> reasoning tags in your generated comment/review.
 CRITICAL: NEVER use commas in your response as it will break the CSV formatting."""
 
     prompt = PromptTemplate.from_template(template)
@@ -199,7 +203,7 @@ CRITICAL: NEVER use commas in your response as it will break the CSV formatting.
     for i in range(args.gen_count):
         ejemplos_texto = "No hay ejemplos disponibles."
         if tiene_ejemplos:
-            num_ejemplos = min(3, len(df_filtrado))
+            num_ejemplos = min(0, len(df_filtrado))
             ejemplos = df_filtrado.sample(n=num_ejemplos)[args.text_col].tolist()
             ejemplos_texto = "\n".join([f"- {ej}" for ej in ejemplos])
 

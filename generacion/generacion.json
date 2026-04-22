@@ -1,13 +1,13 @@
 {
-  "mode": "classify",
-  "model": "gemma2:2b",
-  "file": "clasificacion/ficheros_csv/Instagram_dev.csv",
+  "mode": "generate",
+  "model": "llama3.2:3b",
+  "file": "clustering/ficheros_divididos/Instagram_NEUTRO.csv",
   "train_file": "clasificacion/ficheros_csv/Instagram_train.csv",
   "text_col": "content",
   "target_col": "score",
-  "sample": 10,
+  "sample": -1,
   "metric_to_evaluate": "macro",
-  "gen_class": "POSITIVO",
-  "gen_count": 10,
-  "out_file": null
+  "gen_class": "NEUTRO",
+  "gen_count": 500,
+  "out_file": "generacion/NEUTRAS-llama-FINAL.csv"
 }

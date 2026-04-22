@@ -30,7 +30,7 @@ Aquí debes configurar los parámetros de ejecución:
 {
   "mode": "classify",              // Modos: "classify" o "generate"
   "model": "gemma2:2b",            // Nombre del modelo en Ollama
-  "file": "ruta/dev.csv",          // Archivo a evaluar o base de ejemplos
+  "file": "ruta/dev.csv",          // Archivo a evaluar (classify) o base de ejemplos (generate)
   "train_file": "ruta/train.csv",  // (Obligatorio en classify) Ejemplos para Few-Shot
   "text_col": "content",           // Nombre de la columna con el texto
   "target_col": "score",           // Nombre de la columna con la etiqueta real
@@ -38,7 +38,7 @@ Aquí debes configurar los parámetros de ejecución:
   "metric_to_evaluate": "macro",   // Métrica global para Scikit-Learn (macro/micro)
   "gen_class": "POSITIVO",         // (Solo Modo generate) Clase a crear
   "gen_count": 10,                 // (Solo Modo generate) Cantidad a crear
-  "out_file": null                 // Nombre del archivo de salida
+  "out_file": generacion/PRUEBA.csv                 // Directorio y nombre del archivo de salida
 }
 
 
