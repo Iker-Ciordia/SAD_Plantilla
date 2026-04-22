@@ -1,0 +1,13 @@
+{
+  "mode": "classify",
+  "model": "gemma2:2b",
+  "file": "clasificacion/ficheros_csv/Instagram_dev.csv",
+  "train_file": "clasificacion/ficheros_csv/Instagram_train.csv",
+  "text_col": "content",
+  "target_col": "score",
+  "sample": 5,
+  "metric_to_evaluate": "macro",
+  "gen_class": "POSITIVO",
+  "gen_count": 10,
+  "out_file": null
+}
