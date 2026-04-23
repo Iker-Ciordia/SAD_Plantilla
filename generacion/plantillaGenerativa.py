@@ -203,7 +203,7 @@ CRITICAL: NEVER use commas in your response as it will break the CSV formatting.
     for i in range(args.gen_count):
         ejemplos_texto = "No hay ejemplos disponibles."
         if tiene_ejemplos:
-            num_ejemplos = min(0, len(df_filtrado))
+            num_ejemplos = min(3, len(df_filtrado))
             ejemplos = df_filtrado.sample(n=num_ejemplos)[args.text_col].tolist()
             ejemplos_texto = "\n".join([f"- {ej}" for ej in ejemplos])
 
