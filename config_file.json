@@ -27,6 +27,12 @@
     "max_alpha": 1,
     "step_alpha": 0.01
   },
+  "hyperparametersKMeans": {
+    "k_min": 1,
+    "k_max": 7,
+    "step": 1,
+    "n_inicios": 10
+  },
   "preprocessing": {
     "agrupar_sentimiento_proyecto": true,
 
