@@ -1,0 +1,15 @@
+Combinacion,Accuracy,Precision,Recall,F_score
+"C=0.5, penalty=l2, solver=lbfgs",0.8670,0.6024,0.5889,0.5820
+"C=0.5, penalty=l2, solver=newton-cg",0.8670,0.6024,0.5889,0.5820
+"C=0.8, penalty=l2, solver=lbfgs",0.8684,0.6028,0.5956,0.5853
+"C=0.8, penalty=l2, solver=newton-cg",0.8684,0.6028,0.5956,0.5853
+"C=1.0, penalty=l2, solver=lbfgs",0.8684,0.6028,0.5956,0.5853
+"C=1.0, penalty=l2, solver=newton-cg",0.8684,0.6028,0.5956,0.5853
+"C=2.0, penalty=l2, solver=lbfgs",0.8684,0.6100,0.6038,0.5982
+"C=2.0, penalty=l2, solver=newton-cg",0.8684,0.6100,0.6038,0.5982
+"C=3.0, penalty=l2, solver=lbfgs",0.8723,0.6147,0.6056,0.6016
+"C=3.0, penalty=l2, solver=newton-cg",0.8710,0.6131,0.6050,0.6005
+"C=5.0, penalty=l2, solver=lbfgs",0.8697,0.6234,0.6111,0.6095
+"C=5.0, penalty=l2, solver=newton-cg",0.8697,0.6234,0.6111,0.6095
+"C=10.0, penalty=l2, solver=lbfgs",0.8684,0.6207,0.6105,0.6091
+"C=10.0, penalty=l2, solver=newton-cg",0.8710,0.6227,0.6147,0.6121

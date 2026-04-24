@@ -1,7 +1,7 @@
 {
   "proyecto": true,
   "dataset_language": "english",
-  "algorithm": "NaiveBayes",
+  "algorithm": "LogisticRegression",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -42,7 +42,7 @@
   "hyperparametersLogisticRegression": {
     "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
     "penalty": ["l2"],
-    "solver": ["lbfgs"]
+    "solver": ["lbfgs", "newton-cg"]
   },
   "hyperparametersLDA": {
     "k_min": 2,
@@ -69,6 +69,6 @@
     "text_preprocess": "tf-idf",
     "ngramas_tfidf": 1,
     "balance": "auto",
-    "sampling": "undersampling"
+    "sampling": "none"
   }
 }
