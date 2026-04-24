@@ -1,0 +1,8 @@
+Combinacion,Accuracy,Precision,Recall,F_score
+"C=0.5, penalty=l2, solver=lbfgs",0.8657,0.6190,0.5996,0.5944
+"C=0.8, penalty=l2, solver=lbfgs",0.8644,0.6133,0.6005,0.5945
+"C=1.0, penalty=l2, solver=lbfgs",0.8644,0.6142,0.6005,0.5950
+"C=2.0, penalty=l2, solver=lbfgs",0.8684,0.6396,0.6105,0.6097
+"C=3.0, penalty=l2, solver=lbfgs",0.8657,0.6316,0.6093,0.6075
+"C=5.0, penalty=l2, solver=lbfgs",0.8644,0.6011,0.6005,0.5945
+"C=10.0, penalty=l2, solver=lbfgs",0.8577,0.5878,0.5929,0.5871

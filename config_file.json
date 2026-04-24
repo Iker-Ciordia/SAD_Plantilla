@@ -1,7 +1,7 @@
 {
   "proyecto": true,
   "dataset_language": "english",
-  "algorithm": "LDA",
+  "algorithm": "NaiveBayes",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -22,9 +22,9 @@
     "n_estimators": 200
   },
   "hyperparametersNaiveBayes": {
-    "type": "complement",
+    "type": "multinomial",
     "min_alpha": 0.01,
-    "max_alpha": 2,
+    "max_alpha": 1,
     "step_alpha": 0.01
   },
   "hyperparametersKMeans": {
@@ -38,6 +38,11 @@
     "k_max": 7,
     "step": 1,
     "n_inicios": 10
+  },
+  "hyperparametersLogisticRegression": {
+    "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
+    "penalty": ["l2"],
+    "solver": ["lbfgs"]
   },
   "hyperparametersLDA": {
     "k_min": 2,
@@ -62,8 +67,8 @@
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
 
     "text_preprocess": "tf-idf",
-    "ngramas_tfidf": 3,
+    "ngramas_tfidf": 1,
     "balance": "auto",
-    "sampling": "none"
+    "sampling": "undersampling"
   }
 }

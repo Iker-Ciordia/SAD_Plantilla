@@ -28,7 +28,7 @@ Aquí se explica de forma concisa cómo utilizar el programa. Hemos intentado ex
 
 ## 4.1 Modelos supervisados (entrenamiento y evaluación)
 1. Activa el entorno virtual utilizado para el programa.
-2. Sitúate dentro del directorio del repositorio que has clonado.
+2. Sitúate dentro del directorio de la carpeta donde está el fichero "entrenadorModelos.py" del repositorio que has clonado.
 3. Modifica todos los parámetros que desees dentro del fichero *config_file.json*. Ten en cuenta que esta configuración variará en función del dataset a predecir y del modelo que se quiera utilizar.
 4. Crea un modelo predictivo basándote en tu configuración previa con el siguiente comando:
 ```bash

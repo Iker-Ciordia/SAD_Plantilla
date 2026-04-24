@@ -618,6 +618,29 @@ def naiveBayes(data_train, data_dev, alpha=None, tipo="multinomial"):
 
     return y_dev, y_pred, modelo_naive_bayes
 
+def logisticRegression(data_train, data_dev, C=1.0, penalty='l2', solver='lbfgs'):
+    """
+    Función para implementar el algoritmo Logistic Regression con datos ya preprocesados
+    """
+    # Separar atributos y clase
+    X_train = data_train.iloc[:, :-1].values
+    y_train = data_train.iloc[:, -1].values
+    X_dev = data_dev.iloc[:, :-1].values
+    y_dev = data_dev.iloc[:, -1].values
+
+    # Instanciar el modelo
+    from sklearn.linear_model import LogisticRegression
+    # max_iter alto es útil si el dataset es grande o complejo para que converja
+    modelo_lr = LogisticRegression(C=C, penalty=penalty, solver=solver, max_iter=1000, class_weight='balanced')
+
+    # Entrenar el modelo
+    modelo_lr.fit(X_train, y_train)
+
+    # Predecir los resultados
+    y_pred = modelo_lr.predict(X_dev)
+
+    return y_dev, y_pred, modelo_lr
+
 def guardar_resultados_csv(combinacion_Params, y_dev, y_pred):
     """Guarda las métricas en una fila del archivo CSV."""
     from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
@@ -681,7 +704,6 @@ if __name__ == "__main__":
     data_train_y_dev = data
 
     if config.get("proyecto", False): #Si estamos trabajando en el proyecto
-        #TODO Arreglar las rutas porque si ejecutamos como siempre dice que no exite el directorio
         if not os.path.exists("ficheros_csv/Instagram_test.csv") and not os.path.exists(
                 "ficheros_csv/Instagram_traindev.csv"): #Si no se ha separado previamente en train, dev y test
             data_train_y_dev, data_test = train_test_split(data, test_size=0.15, random_state=42, stratify=data[columna_objetivo])
@@ -1003,6 +1025,65 @@ if __name__ == "__main__":
         archivo = open(nombre_archivo, 'wb')
         pickle.dump(paquete_final, archivo)
         archivo.close()
+
+    #######################################
+    #  Empieza algoritmo LogisticRegression
+    #######################################
+    elif algoritmo == "LogisticRegression":
+        print("\n[->] Ejecutando modelo: Regresión Logística")
+
+        # Leemos los rangos del JSON
+        hiper_LR = config.get("hyperparametersLogisticRegression", {})
+        lista_C = hiper_LR.get("C", [0.01, 0.1, 1, 10])  # C controla la regularización (inverso de la fuerza)
+        lista_penalty = hiper_LR.get("penalty", ["l2"])
+        lista_solver = hiper_LR.get("solver", ["lbfgs"])  # lbfgs es el estándar, liblinear va bien para datasets pequeños
+
+        import os
+
+        if os.path.exists('resultados.csv'):
+            os.remove('resultados.csv')
+
+        mejor_f1 = -1.0
+        mejor_modelo = None
+        mejores_hiperparametros = ""
+
+        # Bucle de hiperparámetros
+        for c_val in lista_C:
+            for pen in lista_penalty:
+                for sol in lista_solver:
+                    print(f"\n--------------------------------------------------")
+                    print(f"--> Evaluando combinación: C={c_val}, penalty={pen}, solver={sol}")
+
+                    # Llamamos a la función
+                    y_dev, y_pred, modelo_entrenado = logisticRegression(
+                        data_train, data_dev, C=c_val, penalty=pen, solver=sol
+                    )
+
+                    # Mostrar y guardar resultados
+                    print(calculate_confusion_matrix(y_dev, y_pred))
+                    f1_actual = calculate_metrics(y_dev, y_pred, config_file)
+
+                    if f1_actual > mejor_f1:
+                        mejor_f1 = f1_actual
+                        mejor_modelo = modelo_entrenado
+                        mejores_hiperparametros = f"C={c_val}, penalty={pen}, solver={sol}"
+                        print(f"    [!] ¡Nuevo mejor modelo encontrado! F1: {mejor_f1:.4f}")
+
+                    combinacion_Params = f"C={c_val}, penalty={pen}, solver={sol}"
+                    guardar_resultados_csv(combinacion_Params, y_dev, y_pred)
+
+        print(f"\n==================================================")
+        print(f"EL GANADOR ES: {mejores_hiperparametros} con F1={mejor_f1:.4f}")
+
+        import pickle
+
+        paquete_final = {
+            'modelo': mejor_modelo,
+            'herramientas_preproceso': mis_herramientas
+        }
+        with open('mejor_modelo_logistic_regression.pkl', 'wb') as archivo:
+            pickle.dump(paquete_final, archivo)
+
     else:
         print(f"Error: Algoritmo '{algoritmo}' no reconocido en el JSON.")
         sys.exit(1)
