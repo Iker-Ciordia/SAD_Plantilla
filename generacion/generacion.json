@@ -1,7 +1,7 @@
 {
-  "mode": "generate",
-  "model": "gemma4:e2b",
-  "file": "clustering/ficheros_divididos/Instagram_NEGATIVO.csv",
+  "mode": "classify",
+  "model": "gemma2:2b",
+  "file": "clasificacion/ficheros_csv/Instagram_dev.csv",
   "train_file": "clasificacion/ficheros_csv/Instagram_train.csv",
   "text_col": "content",
   "target_col": "score",

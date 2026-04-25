@@ -101,6 +101,7 @@ Label:"""
         array_prediccion = []
         etiquetas_validas = ['POSITIVO', 'NEGATIVO', 'NEUTRO']
         registro_prompts_actual = []
+        contador = 0
 
         for n, row in df.iterrows():
             if n == args.sample:
@@ -129,6 +130,9 @@ Label:"""
             if respuesta in etiquetas_validas:
                 array_real.append(real)
                 array_prediccion.append(respuesta)
+
+            contador = contador + 1
+            print(contador)
 
         # --- Calcular e imprimir métricas de ESTE EXPERIMENTO ---
         etiquetas_fijas = ['NEGATIVO', 'NEUTRO', 'POSITIVO']
