@@ -207,6 +207,15 @@ if __name__ == "__main__":
         plt.xlabel('Número de Clústeres (K)')
         plt.ylabel('Inercia (Suma de distancias)')
         plt.title('Método del Codo para determinar K óptimo')
+        # --- GUARDAR DATOS PARA TABLEAU ---
+        df_codo = pd.DataFrame({
+            'numero_clusters_k': list(ks),
+            'inercia': inercias
+        })
+        ruta_codo = "./clustering/kmeans_datos_codo_tableau.csv"
+        df_codo.to_csv(ruta_codo, index=False)
+        print(f"[V] Datos del gráfico del codo guardados para Tableau en: {ruta_codo}")
+
         plt.show()
 
         # --- PROCESO FINAL DE EXTRACCIÓN ---
@@ -229,12 +238,12 @@ if __name__ == "__main__":
             )
 
             # Guardar CSV de palabras clave por tópico
-            ruta_palabras = "./clustering/palabras_clave_por_topico.csv"
+            ruta_palabras = "./clustering/kmeans_palabras_clave_por_topico.csv"
             df_palabras.to_csv(ruta_palabras, index=False)
             print(f"\n[V] CSV de palabras clave por tópico guardado en: {ruta_palabras}")
 
         # 4. Guardar el resultado principal con los cluster_id en CSV
-        ruta_salida = "./clustering/resultados_agrupados.csv"
+        ruta_salida = "./clustering/kmeans_resultados_agrupados.csv"
         data_final.to_csv(ruta_salida, index=False)
         print(f"\n[V] CSV con clusters guardado en: {ruta_salida}")
 
@@ -252,7 +261,7 @@ if __name__ == "__main__":
         #   passes             : número de pasadas sobre el corpus en el entrenamiento
         #                        (más pasadas = modelo más ajustado, pero más lento)
         #   alpha              : prior de Dirichlet sobre la distribución documento-tópico.
-        #                        'auto' deja que Gensim lo aprenda solo del corpus.
+        #                        'auto' deja que Gensim lo aprenda solo de los datos.
         #   eta                : prior de Dirichlet sobre la distribución tópico-palabra.
         #                        'auto' deja que Gensim lo aprenda solo del corpus.
         #   coherencia_metrica : métrica para evaluar la calidad de los tópicos.
@@ -262,7 +271,7 @@ if __name__ == "__main__":
         #                          "c_uci"  → necesita los textos tokenizados.
         #                                     Valores más altos = mejor.
         #                          "c_v"    → necesita los textos tokenizados. La más
-        #                                     usada en la literatura. Valores entre 0 y 1,
+        #                                     usada en la teoría. Valores entre 0 y 1,
         #                                     más alto = mejor.
         hiper_lda = config.get("hyperparametersLDA", {})
         k_min              = hiper_lda.get("k_min", 2)
@@ -287,9 +296,9 @@ if __name__ == "__main__":
         vectorizador     = mis_herramientas['vectorizers'][col_name]
         nombres_palabras = vectorizador.get_feature_names_out()
 
-        # --- CONSTRUCCIÓN DEL CORPUS GENSIM ---
-        # LDA en Gensim no acepta matrices directamente: necesita un Dictionary
-        # (vocabulario) y un corpus en formato BOW (Bag of Words).
+        # --- CONSTRUCCIÓN DE DATOS GENSIM ---
+        # LDA en Gensim no acepta matrices directamente: necesita un diccionario
+        # (vocabulario) y un corpus en formato BOW.
         # Usamos la función auxiliar construir_corpus_gensim para generarlos
         # a partir de la matriz TF-IDF que ya tenemos preprocesada.
         dictionary, corpus = construir_corpus_gensim(X_array, nombres_palabras)
@@ -313,7 +322,7 @@ if __name__ == "__main__":
         print(f"\n[i] Métrica de coherencia seleccionada: {coherencia_metrica}")
 
         # --- BÚSQUEDA DEL NÚMERO ÓPTIMO DE TÓPICOS ---
-        # Análogo al metodo del codo de K-Means, pero usando la métrica de coherencia
+        # Equivalente al metodo del codo de K-Means, pero usando la métrica de coherencia
         # elegida. La coherencia mide si las palabras más probables de cada tópico
         # tienden a aparecer juntas en los documentos.
         coherencias = []
@@ -371,6 +380,15 @@ if __name__ == "__main__":
         plt.xlabel('Número de Tópicos (K)')
         plt.ylabel(f'Coherencia {coherencia_metrica}')
         plt.title(f'Coherencia {coherencia_metrica} por número de tópicos LDA')
+
+        # --- GUARDAR DATOS PARA TABLEAU ---
+        df_coherencia = pd.DataFrame({
+            'numero_topicos_k': list(ks),
+            f'coherencia_{coherencia_metrica}': coherencias
+        })
+        ruta_coh = "./clustering/lda_datos_coherencia_tableau.csv"
+        df_coherencia.to_csv(ruta_coh, index=False)
+        print(f"[V] Datos de coherencia guardados para Tableau en: {ruta_coh}")
         plt.show()
 
         # --- PROCESO FINAL DE EXTRACCIÓN ---
@@ -389,19 +407,30 @@ if __name__ == "__main__":
             random_state=42
         )
 
-        # 2. Asignar a cada instancia su tópico dominante.
-        # LDA es un modelo probabilístico: cada documento tiene una distribución
-        # de probabilidades sobre todos los tópicos. Nos quedamos con el tópico
-        # de mayor probabilidad como asignación principal (tópico dominante).
+        # 2. Asignar distribución completa (Soft) Y tópico dominante (Hard)
         data_final = data.copy()
-        cluster_ids = []
+
+        probabilidades_por_topico = {i: [] for i in range(k_final)}
+        cluster_ids = []  # <-- Recuperamos la lista para no romper el paso 3
+
         for bow in corpus:
-            # get_document_topics devuelve la distribución completa del documento
             distribucion = lda_final.get_document_topics(bow, minimum_probability=0)
-            # Elegimos el tópico con mayor probabilidad
+
+            # A. Calculamos el tópico dominante (Hard Clustering)
             topico_dominante = max(distribucion, key=lambda x: x[1])[0]
             cluster_ids.append(topico_dominante)
+
+            # B. Repartimos las probabilidades (Soft Clustering)
+            for topico_id, prob in distribucion:
+                probabilidades_por_topico[topico_id].append(prob)
+
+        # Añadimos la columna cluster_id (¡Esto arregla tu error!)
         data_final['cluster_id'] = cluster_ids
+
+        # Añadimos las nuevas columnas de probabilidades
+        for i in range(k_final):
+            nombre_columna = f"prob_topico_{i}"
+            data_final[nombre_columna] = probabilidades_por_topico[i]
 
         # 3. Imprimir y guardar las palabras clave por tópico.
         # En LDA el peso de cada palabra en un tópico es directamente su probabilidad

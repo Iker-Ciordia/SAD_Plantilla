@@ -1,7 +1,7 @@
 {
   "proyecto": true,
   "dataset_language": "english",
-  "algorithm": "LogisticRegression",
+  "algorithm": "LDA",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -27,22 +27,17 @@
     "max_alpha": 1,
     "step_alpha": 0.01
   },
-  "hyperparametersKMeans": {
-    "k_min": 1,
-    "k_max": 7,
-    "step": 1,
-    "n_inicios": 10
-  },
-  "hyperparametersKMeans": {
-    "k_min": 1,
-    "k_max": 7,
-    "step": 1,
-    "n_inicios": 10
-  },
   "hyperparametersLogisticRegression": {
     "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
     "penalty": ["l2"],
     "solver": ["lbfgs", "newton-cg"]
+  },
+
+  "hyperparametersKMeans": {
+    "k_min": 2,
+    "k_max": 7,
+    "step": 1,
+    "n_inicios": 10
   },
   "hyperparametersLDA": {
     "k_min": 2,
