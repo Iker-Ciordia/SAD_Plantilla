@@ -716,7 +716,8 @@ if __name__ == "__main__":
 
 
         else: #Si se ha separado previamente en train, dev y test
-            data_train = load_data("ficheros_csv/Instagram_train_combinado_IA.csv", columna_objetivo, config)
+            data_train = load_data("ficheros_csv/Instagram_train.csv", columna_objetivo, config)
+            data_train = load_data("ficheros_csv/Instagram_train.csv", columna_objetivo, config)
             data_dev = load_data("ficheros_csv/Instagram_dev.csv", columna_objetivo, config)
 
     else: #No es el proyecto

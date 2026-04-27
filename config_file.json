@@ -25,7 +25,7 @@
     "type": "multinomial",
     "min_alpha": 0.01,
     "max_alpha": 1,
-    "step_alpha": 0.01
+    "step_alpha": 0.005
   },
   "hyperparametersLogisticRegression": {
     "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
@@ -62,7 +62,7 @@
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
 
     "text_preprocess": "tf-idf",
-    "ngramas_tfidf": 1,
+    "ngramas_tfidf": 2,
     "balance": "auto",
     "sampling": "none"
   }
