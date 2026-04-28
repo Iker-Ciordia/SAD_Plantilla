@@ -78,7 +78,7 @@ o si no te funciona el anterior:
 py plantillaClustering.py fichero_datos.csv "columna_objetivo" -c config_file.json
 ```
 
-> *El script te mostrará una gráfica interactiva en el caso de que uses K-Means (Método del Codo). Deberás observar dónde se aplana la curva, cerrar la ventana gráfica y escribir por consola el número óptimo de **K** que deseas aplicar.*
+> *El script te mostrará una gráfica interactiva . Deberás observar la curva, cerrar la ventana gráfica y escribir por consola el número óptimo de **K** (clusters) que deseas aplicar.*
 
 6. Los archivos resultantes se guardarán en la carpeta `./clustering/ficheros_divididos/` y los resultados del análisis en carpetas organizadas por sentimiento (ej. `Clustering_POSITIVO/`, `Clustering_NEGATIVO/`).
 
@@ -106,7 +106,7 @@ El archivo `config_file.json` actúa como el panel de mandos central del proyect
 ### 5.1. Configuración General
 * **proyecto**: Booleano (`true` / `false`). Si se activa, aplica la lógica específica y particular de este proyecto (como divisiones predefinidas de train/dev/test y un filtrado especial de stopwords).
 * **dataset_language**: Define el idioma principal del dataset (ej. `"english"`, `"spanish"`). Es vital para cargar el diccionario adecuado de stopwords y aplicar la lematización o stemming correctos en los textos.
-* **algorithm**: El algoritmo principal que se va a ejecutar (opciones: `"KNN"`, `"DecisionTree"`, `"RandomForest"`, `"NaiveBayes"`, `"K-Means"`).
+* **algorithm**: El algoritmo principal que se va a ejecutar (opciones: `"KNN"`, `"DecisionTree"`, `"RandomForest"`, `"NaiveBayes"`, `"K-Means"`, `"LDA"`).
 * **metric_to_evaluate**: Métrica utilizada para evaluar y decidir el modelo ganador durante la búsqueda de hiperparámetros (`"micro"`, `"macro"`, `"binary"`).
 
 ### 5.2. Módulo de Preprocesamiento (preprocessing)
