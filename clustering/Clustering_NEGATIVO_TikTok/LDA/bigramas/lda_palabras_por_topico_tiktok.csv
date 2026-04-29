@@ -1,0 +1,51 @@
+cluster_id,n_instancias,rank,palabra,prob_lda
+0,124,1,tiktok,0.03568
+0,124,2,lose,0.02481
+0,124,3,time scrolling,0.02481
+0,124,4,track time,0.02481
+0,124,5,scrolling tiktok,0.02481
+0,124,6,track,0.02481
+0,124,7,scrolling,0.02481
+0,124,8,lose track,0.02481
+0,124,9,time,0.02428
+0,124,10,like,0.01853
+1,188,1,data,0.02096
+1,188,2,privacy,0.02042
+1,188,3,concerned data,0.01995
+1,188,4,data privacy,0.01994
+1,188,5,concerned,0.01994
+1,188,6,could definitely,0.01959
+1,188,7,part could,0.01959
+1,188,8,definitely,0.01958
+1,188,9,improved,0.01958
+1,188,10,definitely improved,0.01958
+2,123,1,ad,0.02889
+2,123,2,promotion,0.02826
+2,123,3,many ad,0.02826
+2,123,4,ad promotion,0.02826
+2,123,5,many,0.02766
+2,123,6,seeing,0.0267
+2,123,7,repeatedly,0.0267
+2,123,8,seeing trend,0.0267
+2,123,9,keep seeing,0.0267
+2,123,10,trend repeatedly,0.0267
+3,304,1,content,0.02312
+3,304,2,get,0.01822
+3,304,3,good,0.01634
+3,304,4,make,0.016
+3,304,5,stay focused,0.01592
+3,304,6,focused,0.01592
+3,304,7,harder stay,0.01592
+3,304,8,harder,0.01592
+3,304,9,stay,0.01592
+3,304,10,make harder,0.01592
+4,182,1,update,0.03046
+4,182,2,tiktok,0.0231
+4,182,3,app,0.02033
+4,182,4,cant,0.01797
+4,182,5,ok,0.017
+4,182,6,face,0.01586
+4,182,7,comment,0.01449
+4,182,8,bad,0.01359
+4,182,9,section,0.01351
+4,182,10,comment section,0.01351
