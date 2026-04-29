@@ -1,5 +1,6 @@
 {
   "proyecto": true,
+  "dataset_combinado_IA": false,
   "dataset_language": "english",
   "algorithm": "LDA",
   "metric_to_evaluate": "macro",
