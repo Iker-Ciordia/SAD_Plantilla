@@ -706,17 +706,20 @@ if __name__ == "__main__":
     if config.get("proyecto", False): #Si estamos trabajando en el proyecto
         if not os.path.exists("ficheros_csv/Instagram_test.csv") and not os.path.exists(
                 "ficheros_csv/Instagram_traindev.csv"): #Si no se ha separado previamente en train, dev y test
+            print("CHECK 1")
+
             data_train_y_dev, data_test = train_test_split(data, test_size=0.15, random_state=42, stratify=data[columna_objetivo])
             data_test.to_csv("ficheros_csv/Instagram_test.csv", index=False)
             data_train, data_dev = train_test_split(data_train_y_dev, test_size=0.177, random_state=42,
                                                     stratify=data_train_y_dev[columna_objetivo])  # Si hay que dividir en 70% (train), 15% (dev) y 15% (test)
-            data_train.to_csv("Instagram_train_mix_generadas.csv", index=False)
+            data_train.to_csv("Instagram_train.csv", index=False)
             data_dev.to_csv("ficheros_csv/Instagram_dev.csv", index=False)
 
 
 
         else: #Si se ha separado previamente en train, dev y test
-            if config.get("dataset_combinado_IA",  False):
+            if not config.get("dataset_combinado_IA",  False):
+                print("CHECK 2")
                 data_train = load_data("ficheros_csv/Instagram_train.csv", columna_objetivo, config)
                 data_train = load_data("ficheros_csv/Instagram_train.csv", columna_objetivo, config)
                 data_dev = load_data("ficheros_csv/Instagram_dev.csv", columna_objetivo, config)
