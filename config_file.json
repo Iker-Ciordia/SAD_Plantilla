@@ -1,8 +1,7 @@
 {
   "proyecto": true,
-  "dataset_combinado_IA": false,
   "dataset_language": "english",
-  "algorithm": "K-Means",
+  "algorithm": "LDA",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,
@@ -20,13 +19,34 @@
     "criterion":  ["gini", "entropy"]
   },
   "hyperparametersRandomForest": {
-    "n_estimators": 50
+    "n_estimators": 200
   },
   "hyperparametersNaiveBayes": {
-    "type": "complement",
+    "type": "multinomial",
     "min_alpha": 0.01,
     "max_alpha": 1,
-    "step_alpha": 0.01
+    "step_alpha": 0.005
+  },
+  "hyperparametersLogisticRegression": {
+    "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
+    "penalty": ["l2"],
+    "solver": ["lbfgs", "newton-cg"]
+  },
+
+  "hyperparametersKMeans": {
+    "k_min": 2,
+    "k_max": 7,
+    "step": 1,
+    "n_inicios": 10
+  },
+  "hyperparametersLDA": {
+    "k_min": 2,
+    "k_max": 10,
+    "step": 1,
+    "passes": 10,
+    "alpha": "auto",
+    "eta": "auto",
+    "coherencia_metrica": "c_v"
   },
   "preprocessing": {
     "agrupar_sentimiento_proyecto": true,
@@ -42,7 +62,7 @@
     "features_scale": ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
 
     "text_preprocess": "tf-idf",
-    "ngramas_tfidf": 1,
+    "ngramas_tfidf": 2,
     "balance": "auto",
     "sampling": "none"
   }

@@ -1,0 +1,71 @@
+cluster_id,n_instancias,rank,palabra,prob_lda
+0,61,1,seeing trend,0.04216
+0,61,2,trend,0.04216
+0,61,3,keep seeing,0.04216
+0,61,4,repeatedly,0.04216
+0,61,5,seeing,0.04216
+0,61,6,trend repeatedly,0.04216
+0,61,7,keep,0.03201
+0,61,8,tiktok,0.02234
+0,61,9,ok,0.02059
+0,61,10,repeatedly make,0.01712
+1,98,1,video,0.03618
+1,98,2,get view,0.03476
+1,98,3,view,0.03423
+1,98,4,randomly others,0.03407
+1,98,5,view randomly,0.03407
+1,98,6,video get,0.03407
+1,98,7,randomly,0.03406
+1,98,8,others,0.03386
+1,98,9,get,0.03284
+1,98,10,update,0.02848
+2,111,1,tiktok,0.03793
+2,111,2,time,0.03471
+2,111,3,lose,0.0318
+2,111,4,scrolling,0.0318
+2,111,5,time scrolling,0.0318
+2,111,6,scrolling tiktok,0.0318
+2,111,7,lose track,0.0318
+2,111,8,track time,0.0318
+2,111,9,track,0.0318
+2,111,10,good,0.02511
+3,138,1,section,0.02641
+3,138,2,comment section,0.02641
+3,138,3,section toxic,0.02641
+3,138,4,toxic,0.02641
+3,138,5,comment,0.02605
+3,138,6,focus,0.02588
+3,138,7,focus using,0.02588
+3,138,8,hard focus,0.02588
+3,138,9,hard,0.0258
+3,138,10,using,0.0256
+4,239,1,content,0.02931
+4,239,2,feel addictive,0.02136
+4,239,3,feel,0.02136
+4,239,4,addictive,0.02126
+4,239,5,make harder,0.01979
+4,239,6,harder stay,0.01979
+4,239,7,stay focused,0.01979
+4,239,8,stay,0.01979
+4,239,9,harder,0.01979
+4,239,10,focused,0.01979
+5,85,1,fix,0.03237
+5,85,2,please,0.02434
+5,85,3,bad,0.02302
+5,85,4,video,0.02251
+5,85,5,filter,0.02235
+5,85,6,app,0.02148
+5,85,7,log,0.01931
+5,85,8,always,0.01876
+5,85,9,tiktok,0.01793
+5,85,10,please fix,0.01783
+6,83,1,ad,0.04344
+6,83,2,promotion,0.04118
+6,83,3,many ad,0.04118
+6,83,4,ad promotion,0.04118
+6,83,5,many,0.04079
+6,83,6,overwhelming,0.02255
+6,83,7,becomes,0.02255
+6,83,8,becomes overwhelming,0.02255
+6,83,9,promotion make,0.01845
+6,83,10,nice,0.01379

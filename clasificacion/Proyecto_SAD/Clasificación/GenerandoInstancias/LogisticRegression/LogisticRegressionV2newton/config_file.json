@@ -33,12 +33,6 @@
     "step": 1,
     "n_inicios": 10
   },
-  "hyperparametersKMeans": {
-    "k_min": 1,
-    "k_max": 7,
-    "step": 1,
-    "n_inicios": 10
-  },
   "hyperparametersLogisticRegression": {
     "C": [0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0],
     "penalty": ["l2"],

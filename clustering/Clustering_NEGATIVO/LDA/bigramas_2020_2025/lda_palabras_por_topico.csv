@@ -1,0 +1,71 @@
+cluster_id,n_instancias,rank,palabra,prob_lda
+0,19,1,id,0.03347
+0,19,2,smiling,0.03074
+0,19,3,smiling face,0.02604
+0,19,4,face,0.02402
+0,19,5,instagram,0.02127
+0,19,6,really,0.02052
+0,19,7,people,0.01965
+0,19,8,app,0.01656
+0,19,9,show,0.01551
+0,19,10,like,0.01423
+1,68,1,instagram,0.04007
+1,68,2,account,0.02736
+1,68,3,update,0.02574
+1,68,4,app,0.0253
+1,68,5,please,0.02253
+1,68,6,working,0.02172
+1,68,7,thumb,0.01923
+1,68,8,reel,0.01859
+1,68,9,help,0.01649
+1,68,10,work,0.01554
+2,75,1,app,0.03895
+2,75,2,make,0.02696
+2,75,3,feel complicated,0.02023
+2,75,4,complicated,0.02023
+2,75,5,app feel,0.02023
+2,75,6,much,0.01889
+2,75,7,feel,0.01563
+2,75,8,anymore,0.01551
+2,75,9,experience,0.01542
+2,75,10,anyone,0.01535
+3,46,1,many,0.05143
+3,46,2,fake account,0.03255
+3,46,3,fake,0.03255
+3,46,4,many bot,0.03093
+3,46,5,bot fake,0.03093
+3,46,6,bot,0.03056
+3,46,7,time,0.02993
+3,46,8,add,0.02585
+3,46,9,account,0.02504
+3,46,10,get frustrating,0.01674
+4,59,1,reel,0.04782
+4,59,2,everything,0.03128
+4,59,3,feel like,0.02874
+4,59,4,like,0.02873
+4,59,5,everything reel,0.02621
+4,59,6,like everything,0.02621
+4,59,7,user,0.02274
+4,59,8,feel,0.01969
+4,59,9,make,0.01884
+4,59,10,issue,0.01773
+5,37,1,face,0.0623
+5,37,2,good,0.06134
+5,37,3,need,0.04401
+5,37,4,get visibility,0.03388
+5,37,5,pay,0.03388
+5,37,6,need pay,0.03388
+5,37,7,visibility,0.03388
+5,37,8,pay get,0.03388
+5,37,9,get,0.02638
+5,37,10,visibility slows,0.01666
+6,105,1,keep,0.02451
+6,105,2,content repeatedly,0.0188
+6,105,3,repeatedly,0.0188
+6,105,4,keep seeing,0.0188
+6,105,5,seeing,0.0188
+6,105,6,seeing content,0.0188
+6,105,7,content,0.0186
+6,105,8,got,0.01627
+6,105,9,could,0.01606
+6,105,10,reason,0.01591
