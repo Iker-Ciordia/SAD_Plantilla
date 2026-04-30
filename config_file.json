@@ -2,7 +2,7 @@
   "proyecto": true,
   "dataset_combinado_IA": false,
   "dataset_language": "english",
-  "algorithm": "KNN",
+  "algorithm": "K-Means",
   "metric_to_evaluate": "macro",
   "hyperparametersKNN": {
     "p_min": 1,

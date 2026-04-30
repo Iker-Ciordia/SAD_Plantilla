@@ -139,6 +139,12 @@ if __name__ == "__main__":
     columna_objetivo = sys.argv[2]
 
     # 1. Buscamos el archivo JSON en los argumentos
+    # --- MODIFICACIÓN PARA SALIDAS ÚNICAS ---
+    # Extraemos el nombre base del fichero para crear una carpeta de resultados única
+    nombre_base_fichero = os.path.splitext(os.path.basename(fichero))[0]
+    carpeta_resultados = f"./clustering/Resultados_{nombre_base_fichero}"
+    os.makedirs(carpeta_resultados, exist_ok=True)
+    print(f"[i] Los resultados de esta ejecución se guardarán en: {carpeta_resultados}")
     config_file = None
     indice_c = sys.argv.index("-c")
     if indice_c + 1 < len(sys.argv):
@@ -163,12 +169,13 @@ if __name__ == "__main__":
 
     # Bloque para ver los datos preprocesados
     try:
-        os.mkdir("./clustering/datos_preprocesados_clustering")
-        print(f"Directorio 'datos_preprocesados_clustering' creado exitosamente.")
+        # Guardamos los datos preprocesados dentro de la carpeta de resultados única
+        ruta_preprocesados = os.path.join(carpeta_resultados, "datos_preprocesados.csv")
+        data_pre.to_csv(ruta_preprocesados, index=False)
+        print(f"[i] Datos preprocesados guardados en: {ruta_preprocesados}")
     except FileExistsError:
-        print(f"Error: El directorio 'datos_preprocesados_clustering' ya existe.")
-    data_pre.to_csv("./clustering/datos_preprocesados_clustering/datos_preprocesados.csv", index=False)
-
+        # Esto no debería ocurrir ya que la carpeta se crea arriba, pero es una salvaguarda
+        pass
     # Convertimos X_clustering a numpy array denso una sola vez aquí,
     # ya que ambos algoritmos lo necesitan en ese formato
     if isinstance(X_clustering, np.ndarray):
@@ -212,7 +219,7 @@ if __name__ == "__main__":
             'numero_clusters_k': list(ks),
             'inercia': inercias
         })
-        ruta_codo = "./clustering/kmeans_datos_codo_tableau.csv"
+        ruta_codo = os.path.join(carpeta_resultados, "kmeans_datos_codo_tableau.csv")
         df_codo.to_csv(ruta_codo, index=False)
         print(f"[V] Datos del gráfico del codo guardados para Tableau en: {ruta_codo}")
 
@@ -238,12 +245,12 @@ if __name__ == "__main__":
             )
 
             # Guardar CSV de palabras clave por tópico
-            ruta_palabras = "./clustering/kmeans_palabras_clave_por_topico.csv"
+            ruta_palabras = os.path.join(carpeta_resultados, "kmeans_palabras_clave_por_topico.csv")
             df_palabras.to_csv(ruta_palabras, index=False)
             print(f"\n[V] CSV de palabras clave por tópico guardado en: {ruta_palabras}")
 
         # 4. Guardar el resultado principal con los cluster_id en CSV
-        ruta_salida = "./clustering/kmeans_resultados_agrupados.csv"
+        ruta_salida = os.path.join(carpeta_resultados, "kmeans_resultados_agrupados.csv")
         data_final.to_csv(ruta_salida, index=False)
         print(f"\n[V] CSV con clusters guardado en: {ruta_salida}")
 
@@ -386,7 +393,7 @@ if __name__ == "__main__":
             'numero_topicos_k': list(ks),
             f'coherencia_{coherencia_metrica}': coherencias
         })
-        ruta_coh = "./clustering/lda_datos_coherencia_tableau.csv"
+        ruta_coh = os.path.join(carpeta_resultados, "lda_datos_coherencia_tableau.csv")
         df_coherencia.to_csv(ruta_coh, index=False)
         print(f"[V] Datos de coherencia guardados para Tableau en: {ruta_coh}")
         plt.show()
@@ -466,11 +473,11 @@ if __name__ == "__main__":
 
         # Guardar CSV con las palabras clave por tópico
         df_global = pd.DataFrame(resultados_globales)
-        ruta_palabras = "./clustering/lda_palabras_por_topico.csv"
+        ruta_palabras = os.path.join(carpeta_resultados, "lda_palabras_por_topico.csv")
         df_global.to_csv(ruta_palabras, index=False)
         print(f"\n[V] CSV de palabras clave por tópico guardado en: {ruta_palabras}")
 
         # 4. Guardar el resultado principal con los tópicos asignados en CSV
-        ruta_salida = "./clustering/lda_resultados_agrupados.csv"
+        ruta_salida = os.path.join(carpeta_resultados, "lda_resultados_agrupados.csv")
         data_final.to_csv(ruta_salida, index=False)
         print(f"\n[V] CSV con tópicos LDA guardado en: {ruta_salida}")
