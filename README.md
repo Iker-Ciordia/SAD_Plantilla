@@ -30,16 +30,17 @@ Aquí se explica de forma concisa cómo utilizar el programa. Hemos intentado ex
 3. Modifica todos los parámetros que desees dentro del fichero `config_file.json`. Ten en cuenta que esta configuración variará en función del dataset a predecir y del modelo que se quiera utilizar.
 4. Crea un modelo predictivo basándote en tu configuración previa con el siguiente comando:
 
+
 ```bash
 python entrenadorModelos.py fichero_train.csv "columna_objetivo" -c config_file.json
 ```
+> *Si quieres ejecutar una prueba con los datos del proyecto, los ficheros se encuentran en la carpeta clasificacion/ficheros_csv. Instagram.csv son los datos con todo, y para replicar los mismos experimentos que hemos realizado nosotros, hay que mantener intactos como están los ficheros de Instagram_train.csv e Instagram_test.csv*
 
 o si no te funciona el anterior:
 
 ```bash
 py entrenadorModelos.py fichero_train.csv "columna_objetivo" -c config_file.json
 ```
-
 > *El parámetro "fichero_train.csv" será el fichero CSV que tenga tus datos de train. El parámetro "columna_objetivo" será el nombre de la columna a predecir en el fichero CSV.*
 
 5. Una vez se ha creado el modelo (fichero terminado en la extensión .pkl) para la evaluación de los datos de test (otro fichero CSV estructurado igual que el de train) se tiene que ejecutar el siguiente comando:
